@@ -1,0 +1,23 @@
+body {
+  background-color: rgb(89, 89, 89);
+}
+
+.app-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+section {
+  padding: 10px;
+  background-color: rgb(13, 121, 62);
+}
+
+.search-section {
+  border: 1px solid black;
+}
+
+.results-section {
+  border: 1px solid black;
+}
