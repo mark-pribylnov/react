@@ -1,6 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type * as React from 'react';
+import { buildStatsList } from './buildStatsList';
+import { pasteStatsListIntoTable } from './pasteStatsListIntoTable';
 import './App.css';
+
+type PokemonStat = {
+  base_stat: number;
+  stat: { name: string };
+};
 
 const LOCAL_STORAGE_PROPERTIES = {
   searches: 'searches',
@@ -8,12 +15,35 @@ const LOCAL_STORAGE_PROPERTIES = {
 
 function App() {
   const [searchQuery, setSearchQuery] = useState(getLastSearch());
+  const resultsBodyRef = useRef<HTMLTableSectionElement>(null);
+
+  async function requestResults(query: string = 'abra'): Promise<void> {
+    const url = `https://pokeapi.co/api/v2/pokemon/${query.toLowerCase()}`;
+    const res = await fetch(url);
+    const pokemonData = await res.json();
+    const stats: PokemonStat[] = pokemonData.stats;
+    const statStrings = stats.map(
+      (stat) => `${stat.stat.name} - ${stat.base_stat}`
+    );
+    const statsList = buildStatsList(statStrings);
+    const pokemonName = pokemonData.name;
+
+    const tbody = resultsBodyRef.current;
+    if (!tbody) return;
+    pasteStatsListIntoTable(
+      tbody,
+      statsList,
+      String(pokemonName ?? '')
+    );
+  }
 
   function onSubmit(event: React.SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
 
     const searches =
-      JSON.parse(localStorage.getItem(LOCAL_STORAGE_PROPERTIES.searches)) ?? [];
+      JSON.parse(
+        localStorage.getItem(LOCAL_STORAGE_PROPERTIES.searches) ?? '[]'
+      ) ?? [];
     searches.push(searchQuery);
 
     localStorage.setItem(
@@ -21,14 +51,15 @@ function App() {
       JSON.stringify(searches)
     );
 
-    console.log(searches);
+    void requestResults(searchQuery);
   }
 
   function getLastSearch(): string {
     const searches = JSON.parse(
-      localStorage.getItem(LOCAL_STORAGE_PROPERTIES.searches)
+      localStorage.getItem(LOCAL_STORAGE_PROPERTIES.searches) ?? '[]'
     );
-    return !searches ? '' : searches.at(-1);
+    const last = Array.isArray(searches) ? searches.at(-1) : undefined;
+    return typeof last === 'string' ? last : '';
   }
 
   return (
@@ -52,12 +83,12 @@ function App() {
         <table className="results-table">
           <thead>
             <tr>
-              <th scope="col">Item Name</th>
-              <th scope="col">Item Description</th>
+              <th scope="col">Pokemon Name</th>
+              <th scope="col">Pokemon Stats</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
+          <tbody ref={resultsBodyRef}>
+            <tr data-placeholder="true">
               <td>Nothing to show yet</td>
               <td>Nothing to show yet</td>
             </tr>
