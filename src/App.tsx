@@ -11,6 +11,14 @@ type PokemonResponse = {
   stats: PokemonStat[];
 };
 
+type PokemonListItem = {
+  name: string;
+};
+
+type PokemonListResponse = {
+  results: PokemonListItem[];
+};
+
 type PokemonResult = {
   name: string;
   stats: string[];
@@ -24,6 +32,7 @@ type AppState = {
 const LOCAL_STORAGE_PROPERTIES = Object.freeze({
   searches: 'searches',
 });
+const FIRST_PAGE_LIMIT = 10;
 
 function readSavedSearches(): string[] {
   try {
@@ -77,18 +86,49 @@ class App extends React.Component<Record<string, never>, AppState> {
     };
   };
 
+  private readonly fetchFirstPagePokemon = async (): Promise<PokemonResult[]> => {
+    const response = await fetch(
+      `https://pokeapi.co/api/v2/pokemon?limit=${FIRST_PAGE_LIMIT}&offset=0`
+    );
+    if (!response.ok) return [];
+
+    const listData = (await response.json()) as PokemonListResponse;
+    const detailed = await Promise.all(
+      listData.results.map((item) => this.fetchPokemon(item.name))
+    );
+    return detailed.filter((item): item is PokemonResult => item !== null);
+  };
+
+  private readonly loadInitialResults = async (): Promise<void> => {
+    const term = this.state.searchQuery.trim();
+
+    if (term) {
+      const pokemon = await this.fetchPokemon(term);
+      this.setState({ results: pokemon ? [pokemon] : [] });
+      return;
+    }
+
+    const firstPage = await this.fetchFirstPagePokemon();
+    this.setState({ results: firstPage });
+  };
+
+  componentDidMount(): void {
+    void this.loadInitialResults();
+  }
+
   private readonly onSubmit = async (event: SubmitEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     const term = this.state.searchQuery.trim();
-    if (!term) return;
+
+    if (!term) {
+      const firstPage = await this.fetchFirstPagePokemon();
+      this.setState({ results: firstPage });
+      return;
+    }
 
     saveSearchTerm(term);
     const pokemon = await this.fetchPokemon(term);
-    if (!pokemon) return;
-
-    this.setState((prevState) => ({
-      results: [...prevState.results, pokemon],
-    }));
+    this.setState({ results: pokemon ? [pokemon] : [] });
   };
 
   render() {
