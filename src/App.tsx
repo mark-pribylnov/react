@@ -49,7 +49,20 @@ function App() {
 
       <section className="results-section">
         <h2>Result area:</h2>
-        <p>Nothing to show yet</p>
+        <table className="results-table">
+          <thead>
+            <tr>
+              <th scope="col">Item Name</th>
+              <th scope="col">Item Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Nothing to show yet</td>
+              <td>Nothing to show yet</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
     </div>
   );
