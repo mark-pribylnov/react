@@ -27,6 +27,7 @@ type PokemonResult = {
 type AppState = {
   searchQuery: string;
   results: PokemonResult[];
+  lastExecutedSearch: string | null;
 };
 
 const LOCAL_STORAGE_PROPERTIES = Object.freeze({
@@ -63,6 +64,7 @@ class App extends React.Component<Record<string, never>, AppState> {
   state: AppState = {
     searchQuery: getLastSearch(),
     results: [],
+    lastExecutedSearch: null,
   };
 
   private readonly onQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -99,17 +101,47 @@ class App extends React.Component<Record<string, never>, AppState> {
     return detailed.filter((item): item is PokemonResult => item !== null);
   };
 
+  private readonly fetchFirstPageMatchingPokemon = async (
+    searchTerm: string
+  ): Promise<PokemonResult[]> => {
+    const normalizedTerm = searchTerm.toLowerCase();
+    const params = new URLSearchParams({
+      limit: '200',
+      offset: '0',
+      search: normalizedTerm,
+    });
+
+    const response = await fetch(
+      `https://pokeapi.co/api/v2/pokemon?${params.toString()}`
+    );
+    if (!response.ok) return [];
+
+    const listData = (await response.json()) as PokemonListResponse;
+    const matches = listData.results
+      .filter((item) => item.name.includes(normalizedTerm))
+      .slice(0, FIRST_PAGE_LIMIT);
+
+    const detailed = await Promise.all(
+      matches.map((item) => this.fetchPokemon(item.name))
+    );
+    return detailed.filter((item): item is PokemonResult => item !== null);
+  };
+
+  private readonly executeSearch = async (normalizedTerm: string): Promise<void> => {
+    const results = normalizedTerm
+      ? await this.fetchFirstPageMatchingPokemon(normalizedTerm)
+      : await this.fetchFirstPagePokemon();
+
+    this.setState({
+      results,
+      lastExecutedSearch: normalizedTerm,
+      searchQuery: normalizedTerm,
+    });
+  };
+
   private readonly loadInitialResults = async (): Promise<void> => {
     const term = this.state.searchQuery.trim();
-
-    if (term) {
-      const pokemon = await this.fetchPokemon(term);
-      this.setState({ results: pokemon ? [pokemon] : [] });
-      return;
-    }
-
-    const firstPage = await this.fetchFirstPagePokemon();
-    this.setState({ results: firstPage });
+    await this.executeSearch(term);
   };
 
   componentDidMount(): void {
@@ -119,16 +151,18 @@ class App extends React.Component<Record<string, never>, AppState> {
   private readonly onSubmit = async (event: SubmitEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     const term = this.state.searchQuery.trim();
-
-    if (!term) {
-      const firstPage = await this.fetchFirstPagePokemon();
-      this.setState({ results: firstPage });
+    if (term === this.state.lastExecutedSearch) {
+      // Requirement: no new request when search text has not changed.
+      if (term !== this.state.searchQuery) {
+        this.setState({ searchQuery: term });
+      }
       return;
     }
 
-    saveSearchTerm(term);
-    const pokemon = await this.fetchPokemon(term);
-    this.setState({ results: pokemon ? [pokemon] : [] });
+    if (term) {
+      saveSearchTerm(term);
+    }
+    await this.executeSearch(term);
   };
 
   render() {
