@@ -28,6 +28,8 @@ type AppState = {
   searchQuery: string;
   results: PokemonResult[];
   lastExecutedSearch: string | null;
+  isLoading: boolean;
+  errorMessage: string;
 };
 
 const LOCAL_STORAGE_PROPERTIES = Object.freeze({
@@ -59,11 +61,19 @@ function getLastSearch(): string {
   return readSavedSearchTerm();
 }
 
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 class App extends React.Component<Record<string, never>, AppState> {
   state: AppState = {
     searchQuery: getLastSearch(),
     results: [],
     lastExecutedSearch: null,
+    isLoading: false,
+    errorMessage: '',
   };
 
   private readonly onQueryChange = (
@@ -80,7 +90,9 @@ class App extends React.Component<Record<string, never>, AppState> {
 
     const url = `https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(slug)}`;
     const response = await fetch(url);
-    if (!response.ok) return null;
+    if (!response.ok) {
+      throw new Error('Failed to load pokemon details.');
+    }
 
     const pokemonData = (await response.json()) as PokemonResponse;
     return {
@@ -97,7 +109,9 @@ class App extends React.Component<Record<string, never>, AppState> {
     const response = await fetch(
       `https://pokeapi.co/api/v2/pokemon?limit=${FIRST_PAGE_LIMIT}&offset=0`
     );
-    if (!response.ok) return [];
+    if (!response.ok) {
+      throw new Error('Failed to load first page of results.');
+    }
 
     const listData = (await response.json()) as PokemonListResponse;
     const detailed = await Promise.all(
@@ -119,7 +133,9 @@ class App extends React.Component<Record<string, never>, AppState> {
     const response = await fetch(
       `https://pokeapi.co/api/v2/pokemon?${params.toString()}`
     );
-    if (!response.ok) return [];
+    if (!response.ok) {
+      throw new Error('Failed to load matching results.');
+    }
 
     const listData = (await response.json()) as PokemonListResponse;
     const matches = listData.results
@@ -135,15 +151,31 @@ class App extends React.Component<Record<string, never>, AppState> {
   private readonly executeSearch = async (
     normalizedTerm: string
   ): Promise<void> => {
-    const results = normalizedTerm
-      ? await this.fetchFirstPageMatchingPokemon(normalizedTerm)
-      : await this.fetchFirstPagePokemon();
-
     this.setState({
-      results,
-      lastExecutedSearch: normalizedTerm,
+      isLoading: true,
+      errorMessage: '',
       searchQuery: normalizedTerm,
     });
+
+    try {
+      await delay(500);
+      const results = normalizedTerm
+        ? await this.fetchFirstPageMatchingPokemon(normalizedTerm)
+        : await this.fetchFirstPagePokemon();
+
+      this.setState({
+        results,
+        lastExecutedSearch: normalizedTerm,
+      });
+    } catch {
+      this.setState({
+        results: [],
+        lastExecutedSearch: normalizedTerm,
+        errorMessage: 'Could not load data. Please try again.',
+      });
+    } finally {
+      this.setState({ isLoading: false });
+    }
   };
 
   private readonly loadInitialResults = async (): Promise<void> => {
@@ -172,7 +204,7 @@ class App extends React.Component<Record<string, never>, AppState> {
   };
 
   render() {
-    const { searchQuery, results } = this.state;
+    const { searchQuery, results, isLoading, errorMessage } = this.state;
 
     return (
       <div className="app-container">
@@ -200,7 +232,24 @@ class App extends React.Component<Record<string, never>, AppState> {
               </tr>
             </thead>
             <tbody>
-              {results.length === 0 ? (
+              {isLoading ? (
+                <tr className="results-row-loading">
+                  <td colSpan={2}>
+                    <div
+                      className="loading-indicator"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span className="loading-spinner" aria-hidden="true" />
+                      Loading results...
+                    </div>
+                  </td>
+                </tr>
+              ) : errorMessage ? (
+                <tr>
+                  <td colSpan={2}>{errorMessage}</td>
+                </tr>
+              ) : results.length === 0 ? (
                 <tr>
                   <td>Nothing to show yet</td>
                   <td>Nothing to show yet</td>
