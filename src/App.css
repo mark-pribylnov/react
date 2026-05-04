@@ -18,6 +18,10 @@ section {
   border: 1px solid black;
 }
 
+.simulate-error-button {
+  margin-bottom: 8px;
+}
+
 .results-section {
   border: 1px solid black;
 }
@@ -48,6 +52,11 @@ section {
   background-color: #c49139;
   font-weight: 600;
   text-align: center;
+}
+
+.error-boundary-fallback {
+  border: 1px solid #8b0000;
+  background-color: #ffe5e5;
 }
 
 .loading-indicator {

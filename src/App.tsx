@@ -30,6 +30,7 @@ type AppState = {
   lastExecutedSearch: string | null;
   isLoading: boolean;
   errorMessage: string;
+  shouldSimulateCrash: boolean;
 };
 
 const LOCAL_STORAGE_PROPERTIES = Object.freeze({
@@ -101,19 +102,74 @@ function getErrorMessage(error: unknown): string {
   return 'Could not load data. Please try again.';
 }
 
-class App extends React.Component<Record<string, never>, AppState> {
+type ErrorBoundaryProps = {
+  children: React.ReactNode;
+};
+
+type ErrorBoundaryState = {
+  hasError: boolean;
+};
+
+class AppErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  state: ErrorBoundaryState = {
+    hasError: false,
+  };
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    console.error('Application error boundary caught an error:', error, info);
+  }
+
+  private readonly resetBoundary = (): void => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="app-container">
+          <section className="error-boundary-fallback">
+            <h2>Something went wrong</h2>
+            <p>
+              The app hit an unexpected error. You can try resetting it and
+              continue using the app.
+            </p>
+            <button className="search-button" onClick={this.resetBoundary}>
+              Reset application
+            </button>
+          </section>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+class AppContent extends React.Component<Record<string, never>, AppState> {
   state: AppState = {
     searchQuery: getLastSearch(),
     results: [],
     lastExecutedSearch: null,
     isLoading: false,
     errorMessage: '',
+    shouldSimulateCrash: false,
   };
 
   private readonly onQueryChange = (
     event: ChangeEvent<HTMLInputElement>
   ): void => {
     this.setState({ searchQuery: event.target.value });
+  };
+
+  private readonly simulateAppError = (): void => {
+    this.setState({ shouldSimulateCrash: true });
   };
 
   private readonly requestJson = async <T,>(url: string): Promise<T> => {
@@ -239,12 +295,28 @@ class App extends React.Component<Record<string, never>, AppState> {
   };
 
   render() {
-    const { searchQuery, results, isLoading, errorMessage } = this.state;
+    const {
+      searchQuery,
+      results,
+      isLoading,
+      errorMessage,
+      shouldSimulateCrash,
+    } = this.state;
+
+    if (shouldSimulateCrash) {
+      throw new Error('Test error button triggered application crash.');
+    }
 
     return (
       <div className="app-container">
         <section className="search-section">
           <h2>Search area:</h2>
+          <button
+            className="simulate-error-button"
+            onClick={this.simulateAppError}
+          >
+            Test Error Boundary
+          </button>
           <form action="#" onSubmit={this.onSubmit}>
             <input
               type="text"
@@ -309,6 +381,16 @@ class App extends React.Component<Record<string, never>, AppState> {
           </table>
         </section>
       </div>
+    );
+  }
+}
+
+class App extends React.Component {
+  render() {
+    return (
+      <AppErrorBoundary>
+        <AppContent />
+      </AppErrorBoundary>
     );
   }
 }
