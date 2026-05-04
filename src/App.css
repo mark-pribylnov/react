@@ -44,6 +44,12 @@ section {
   text-align: center;
 }
 
+.results-row-error td {
+  background-color: #c49139;
+  font-weight: 600;
+  text-align: center;
+}
+
 .loading-indicator {
   display: inline-flex;
   align-items: center;
