@@ -37,6 +37,17 @@ const LOCAL_STORAGE_PROPERTIES = Object.freeze({
 });
 const FIRST_PAGE_LIMIT = 10;
 
+class HttpError extends Error {
+  readonly status: number;
+  readonly statusText: string;
+
+  constructor(status: number, statusText: string, message: string) {
+    super(message);
+    this.status = status;
+    this.statusText = statusText;
+  }
+}
+
 function readSavedSearchTerm(): string {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_PROPERTIES.searchTerm);
@@ -67,6 +78,29 @@ function delay(ms: number): Promise<void> {
   });
 }
 
+function getHttpErrorMessage(status: number): string {
+  if (status === 404) {
+    return 'No results found for this search.';
+  }
+  if (status >= 500) {
+    return 'Server error. Please try again in a moment.';
+  }
+  if (status >= 400) {
+    return 'Request error. Please check your search and try again.';
+  }
+  return 'Could not load data. Please try again.';
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return 'Network error. Please check your connection and try again.';
+  }
+  return 'Could not load data. Please try again.';
+}
+
 class App extends React.Component<Record<string, never>, AppState> {
   state: AppState = {
     searchQuery: getLastSearch(),
@@ -82,6 +116,18 @@ class App extends React.Component<Record<string, never>, AppState> {
     this.setState({ searchQuery: event.target.value });
   };
 
+  private readonly requestJson = async <T,>(url: string): Promise<T> => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new HttpError(
+        response.status,
+        response.statusText,
+        getHttpErrorMessage(response.status)
+      );
+    }
+    return (await response.json()) as T;
+  };
+
   private readonly fetchPokemon = async (
     query: string
   ): Promise<PokemonResult | null> => {
@@ -89,12 +135,7 @@ class App extends React.Component<Record<string, never>, AppState> {
     if (!slug) return null;
 
     const url = `https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(slug)}`;
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error('Failed to load pokemon details.');
-    }
-
-    const pokemonData = (await response.json()) as PokemonResponse;
+    const pokemonData = await this.requestJson<PokemonResponse>(url);
     return {
       name: pokemonData.name,
       stats: pokemonData.stats.map(
@@ -106,14 +147,9 @@ class App extends React.Component<Record<string, never>, AppState> {
   private readonly fetchFirstPagePokemon = async (): Promise<
     PokemonResult[]
   > => {
-    const response = await fetch(
+    const listData = await this.requestJson<PokemonListResponse>(
       `https://pokeapi.co/api/v2/pokemon?limit=${FIRST_PAGE_LIMIT}&offset=0`
     );
-    if (!response.ok) {
-      throw new Error('Failed to load first page of results.');
-    }
-
-    const listData = (await response.json()) as PokemonListResponse;
     const detailed = await Promise.all(
       listData.results.map((item) => this.fetchPokemon(item.name))
     );
@@ -130,14 +166,9 @@ class App extends React.Component<Record<string, never>, AppState> {
       search: normalizedTerm,
     });
 
-    const response = await fetch(
+    const listData = await this.requestJson<PokemonListResponse>(
       `https://pokeapi.co/api/v2/pokemon?${params.toString()}`
     );
-    if (!response.ok) {
-      throw new Error('Failed to load matching results.');
-    }
-
-    const listData = (await response.json()) as PokemonListResponse;
     const matches = listData.results
       .filter((item) => item.name.includes(normalizedTerm))
       .slice(0, FIRST_PAGE_LIMIT);
@@ -166,12 +197,16 @@ class App extends React.Component<Record<string, never>, AppState> {
       this.setState({
         results,
         lastExecutedSearch: normalizedTerm,
+        errorMessage:
+          normalizedTerm && results.length === 0
+            ? 'No results found for this search.'
+            : '',
       });
-    } catch {
+    } catch (error) {
       this.setState({
         results: [],
         lastExecutedSearch: normalizedTerm,
-        errorMessage: 'Could not load data. Please try again.',
+        errorMessage: getErrorMessage(error),
       });
     } finally {
       this.setState({ isLoading: false });
@@ -246,8 +281,10 @@ class App extends React.Component<Record<string, never>, AppState> {
                   </td>
                 </tr>
               ) : errorMessage ? (
-                <tr>
-                  <td colSpan={2}>{errorMessage}</td>
+                <tr className="results-row-error">
+                  <td colSpan={2} role="alert" aria-live="assertive">
+                    {errorMessage}
+                  </td>
                 </tr>
               ) : results.length === 0 ? (
                 <tr>
