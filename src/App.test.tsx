@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import {
   afterEach,
   beforeEach,
@@ -31,6 +30,7 @@ vi.mock('./services/pokemonApi', () => ({
 
 import App from './App';
 import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
+import { renderWithUser } from './test-utils';
 
 const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
 
@@ -55,8 +55,7 @@ describe('App', () => {
   });
 
   it('saves trimmed search term and runs a matching search on submit', async () => {
-    const user = userEvent.setup();
-    render(<App />);
+    const { user } = renderWithUser(<App />);
     await screen.findByText('mew');
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), '  eevee  ');
@@ -68,9 +67,8 @@ describe('App', () => {
   });
 
   it('does not call the API again when the trimmed search is unchanged', async () => {
-    const user = userEvent.setup();
     vi.mocked(getLastSearch).mockReturnValue('pika');
-    render(<App />);
+    const { user } = renderWithUser(<App />);
     await screen.findByText('mew');
     const calls = fetchFirstPageMatchingPokemon.mock.calls.length;
     await user.click(screen.getByRole('button', { name: /^search$/i }));
@@ -78,11 +76,10 @@ describe('App', () => {
   });
 
   it('shows no-results copy when the API returns an empty list', async () => {
-    const user = userEvent.setup();
     fetchFirstPageMatchingPokemon.mockImplementation(async (term: string) =>
       term === 'missingmon' ? [] : fixtures
     );
-    render(<App />);
+    const { user } = renderWithUser(<App />);
     await screen.findByText('mew');
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), 'missingmon');
@@ -93,7 +90,6 @@ describe('App', () => {
   });
 
   it('shows an error message when the API layer throws', async () => {
-    const user = userEvent.setup();
     fetchFirstPageMatchingPokemon.mockImplementation(async (term: string) => {
       if (term === 'x') {
         throw new HttpError(
@@ -104,7 +100,7 @@ describe('App', () => {
       }
       return fixtures;
     });
-    render(<App />);
+    const { user } = renderWithUser(<App />);
     await screen.findByText('mew');
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), 'x');
@@ -116,9 +112,8 @@ describe('App', () => {
 
   it('shows the error boundary fallback when the test error button is used', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const user = userEvent.setup();
+    const { user } = renderWithUser(<App />);
     try {
-      render(<App />);
       await screen.findByText('mew');
       await user.click(
         screen.getByRole('button', { name: /test error boundary/i })

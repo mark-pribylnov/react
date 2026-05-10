@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderWithUser } from '../test-utils';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 class Boom extends React.Component<{ shouldThrow: boolean }> {
@@ -46,8 +46,7 @@ describe('AppErrorBoundary', () => {
   });
 
   it('returns to children after reset when child no longer throws', async () => {
-    const user = userEvent.setup();
-    const { rerender } = render(<Harness bad />);
+    const { user, rerender } = renderWithUser(<Harness bad />);
     expect(
       screen.getByRole('heading', { name: /something went wrong/i })
     ).toBeInTheDocument();

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { renderWithUser } from '../test-utils';
 import { SearchPanel } from './SearchPanel';
 
 describe('SearchPanel', () => {
@@ -22,10 +22,9 @@ describe('SearchPanel', () => {
   });
 
   it('invokes onQueryChange when the user types', async () => {
-    const user = userEvent.setup();
     const onQueryChange = vi.fn();
 
-    render(
+    const { user } = renderWithUser(
       <SearchPanel
         searchQuery=""
         onQueryChange={onQueryChange}
@@ -39,12 +38,11 @@ describe('SearchPanel', () => {
   });
 
   it('invokes onSubmit when the form is submitted', async () => {
-    const user = userEvent.setup();
     const onSubmit = vi.fn((event) => {
       event.preventDefault();
     });
 
-    render(
+    const { user } = renderWithUser(
       <SearchPanel
         searchQuery="mew"
         onQueryChange={vi.fn()}
@@ -58,10 +56,9 @@ describe('SearchPanel', () => {
   });
 
   it('invokes onSimulateError when the test button is clicked', async () => {
-    const user = userEvent.setup();
     const onSimulateError = vi.fn();
 
-    render(
+    const { user } = renderWithUser(
       <SearchPanel
         searchQuery=""
         onQueryChange={vi.fn()}
