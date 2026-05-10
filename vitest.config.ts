@@ -23,6 +23,7 @@ export default mergeConfig(
           'src/setupTests.{js,ts}',
           'src/**/*.d.ts',
           'src/types/**',
+          'src/test-utils/**',
         ],
         thresholds: {
           statements: 80,
