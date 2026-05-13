@@ -1,12 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpError } from './lib/httpError';
 
 const fetchFirstPagePokemon = vi.hoisted(() => vi.fn());

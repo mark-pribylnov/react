@@ -1,7 +1,7 @@
 import React, { type ChangeEvent, type SubmitEvent } from 'react';
-import { AppErrorBoundary } from './components/AppErrorBoundary';
-import { ResultsPanel } from './components/ResultsPanel';
-import { SearchPanel } from './components/SearchPanel';
+import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
+import { ResultsPanel } from './components/ResultsPanel/ResultsPanel';
+import { SearchPanel } from './components/SearchPanel/SearchPanel';
 import { delay } from './lib/delay';
 import { getErrorMessage } from './lib/httpError';
 import { PokemonApi } from './services/pokemonApi';
@@ -22,6 +22,7 @@ const LOADING_DELAY_MS = 200;
 
 class AppContent extends React.Component<Record<string, never>, AppState> {
   private readonly pokemonApi: PokemonApi;
+  currentPage = 1;
 
   constructor(props: Record<string, never>) {
     super(props);
@@ -58,7 +59,7 @@ class AppContent extends React.Component<Record<string, never>, AppState> {
     try {
       await delay(LOADING_DELAY_MS);
       const results = normalizedTerm
-        ? await this.pokemonApi.fetchFirstPageMatchingPokemon(normalizedTerm)
+        ? await this.pokemonApi.fetchPokemonSearchResults(normalizedTerm)
         : await this.pokemonApi.fetchFirstPagePokemon();
 
       this.setState({
@@ -121,6 +122,7 @@ class AppContent extends React.Component<Record<string, never>, AppState> {
     return (
       <div className="app-container">
         <SearchPanel
+          currentPage={this.currentPage}
           searchQuery={searchQuery}
           onQueryChange={this.onQueryChange}
           onSubmit={this.onSubmit}

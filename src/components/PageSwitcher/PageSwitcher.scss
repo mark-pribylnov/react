@@ -1,0 +1,7 @@
+.page-switcher {
+  display: flex;
+  gap: 20px;
+  & button {
+    cursor: pointer;
+  }
+}
