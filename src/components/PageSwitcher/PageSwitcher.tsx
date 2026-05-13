@@ -13,7 +13,7 @@ export default function PageSwitcher({
   const [pageCount, setPageCount] = useState(currentPage);
 
   function handleClick(direction: 'prev' | 'next'): void {
-    if (direction === 'prev') setPageCount((c) => c - 1);
+    if (direction === 'prev' && pageCount >= 2) setPageCount((c) => c - 1);
     if (direction === 'next') setPageCount((c) => c + 1);
     onPageSwitch?.(direction);
   }

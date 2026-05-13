@@ -39,7 +39,6 @@ export class SearchPanel extends React.Component<SearchPanelProps> {
               className="search-input"
               value={searchQuery}
               onChange={onQueryChange}
-              aria-label="Search terms"
             />
             <button type="submit" className="search-button">
               Search

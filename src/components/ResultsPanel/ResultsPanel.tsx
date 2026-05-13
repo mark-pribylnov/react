@@ -25,19 +25,15 @@ export class ResultsPanel extends React.Component<ResultsPanelProps> {
             {isLoading ? (
               <tr className="results-row-loading">
                 <td colSpan={2}>
-                  <div
-                    className="loading-indicator"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    <span className="loading-spinner" aria-hidden="true" />
+                  <div className="loading-indicator" role="status">
+                    <span className="loading-spinner" />
                     Loading results...
                   </div>
                 </td>
               </tr>
             ) : errorMessage ? (
               <tr className="results-row-error">
-                <td colSpan={2} role="alert" aria-live="assertive">
+                <td colSpan={2} role="alert">
                   {errorMessage}
                 </td>
               </tr>
@@ -47,9 +43,9 @@ export class ResultsPanel extends React.Component<ResultsPanelProps> {
                 <td>Nothing to show yet</td>
               </tr>
             ) : (
-              results.map((result) => (
+              results.map((result, index) => (
                 <tr key={`${result.name}-${result.stats.join('|')}`}>
-                  <td>{result.name}</td>
+                  <td>{`${index + 1}) ${result.name}`}</td>
                   <td>
                     <ul>
                       {result.stats.map((stat) => (
