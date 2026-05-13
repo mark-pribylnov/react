@@ -5,7 +5,7 @@ import type {
   PokemonResult,
 } from '../types/pokemon';
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_LIMIT = 50;
 
 export class PokemonApi {
   private async requestJson<T>(url: string): Promise<T> {
@@ -36,7 +36,7 @@ export class PokemonApi {
 
   async fetchFirstPagePokemon(): Promise<PokemonResult[]> {
     const listData = await this.requestJson<PokemonListResponse>(
-      `https://pokeapi.co/api/v2/pokemon?limit=${ITEMS_PER_PAGE}&offset=0`
+      `https://pokeapi.co/api/v2/pokemon?limit=${ITEMS_LIMIT}&offset=0`
     );
     const detailed = await Promise.all(
       listData.results.map((item) => this.fetchOnePokemon(item.name))
@@ -57,9 +57,9 @@ export class PokemonApi {
     const listData = await this.requestJson<PokemonListResponse>(
       `https://pokeapi.co/api/v2/pokemon?${params.toString()}`
     );
-    const matches = listData.results
-      .filter((item) => item.name.includes(normalizedTerm))
-      .slice(0, ITEMS_PER_PAGE);
+    const matches = listData.results.filter((item) =>
+      item.name.includes(normalizedTerm)
+    );
 
     const detailed = await Promise.all(
       matches.map((item) => this.fetchOnePokemon(item.name))

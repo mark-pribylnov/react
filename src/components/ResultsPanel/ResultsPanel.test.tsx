@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { ResultsPanel } from './ResultsPanel';
+import ResultsPanel from './ResultsPanel';
 
 const sampleResults = [
   {

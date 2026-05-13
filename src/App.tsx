@@ -1,6 +1,6 @@
 import React, { type ChangeEvent, type SubmitEvent } from 'react';
 import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
-import { ResultsPanel } from './components/ResultsPanel/ResultsPanel';
+import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
 import { delay } from './lib/delay';
 import { getErrorMessage } from './lib/httpError';
