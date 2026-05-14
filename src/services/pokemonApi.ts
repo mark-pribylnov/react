@@ -67,7 +67,6 @@ export class PokemonApi {
     const results = detailed.filter(
       (item): item is PokemonResult => item !== null
     );
-    console.log(results);
     return results;
   }
 }

@@ -38,6 +38,10 @@ export default function ResultsPanel({
     setCurrentPage((page) => page + delta);
   }
 
+  function getItemIndexInFullResults(item: PokemonResult) {
+    return results.indexOf(item);
+  }
+
   return (
     <section className="results-section">
       <header className="section-header">
@@ -78,9 +82,9 @@ export default function ResultsPanel({
               <td>Nothing to show yet</td>
             </tr>
           ) : (
-            showedResults.map((result, index) => (
+            showedResults.map((result) => (
               <tr key={`${result.name}-${result.stats.join('|')}`}>
-                <td>{`${index + 1}) ${result.name}`}</td>
+                <td>{`${getItemIndexInFullResults(result) + 1}) ${result.name}`}</td>
                 <td>
                   <ul>
                     {result.stats.map((stat) => (
