@@ -42,6 +42,8 @@ function AppContent() {
     shouldSimulateCrash: false,
   }));
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   const executeSearch = useCallback(async (normalizedTerm: string) => {
     const api = pokemonApiRef.current;
     if (!api) return;
@@ -105,6 +107,7 @@ function AppContent() {
     }
 
     saveSearchTerm(term);
+    setCurrentPage(1);
     await executeSearch(term);
   };
 
@@ -124,6 +127,8 @@ function AppContent() {
         onSimulateError={simulateAppError}
       />
       <ResultsPanel
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
         isLoading={isLoading}
         errorMessage={errorMessage}
         results={results}

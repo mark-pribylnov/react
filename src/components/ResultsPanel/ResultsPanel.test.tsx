@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import ResultsPanel from './ResultsPanel';
+
+const noopSetPage = vi.fn();
 
 const sampleResults = [
   {
@@ -11,13 +13,23 @@ const sampleResults = [
 
 describe('ResultsPanel', () => {
   it('shows loading state', () => {
-    render(<ResultsPanel isLoading errorMessage="" results={[]} />);
+    render(
+      <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
+        isLoading
+        errorMessage=""
+        results={[]}
+      />
+    );
     expect(screen.getByRole('status')).toHaveTextContent(/loading results/i);
   });
 
   it('shows error message', () => {
     render(
       <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
         isLoading={false}
         errorMessage="Request failed"
         results={[]}
@@ -27,13 +39,27 @@ describe('ResultsPanel', () => {
   });
 
   it('shows empty placeholder when there are no results', () => {
-    render(<ResultsPanel isLoading={false} errorMessage="" results={[]} />);
+    render(
+      <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
+        isLoading={false}
+        errorMessage=""
+        results={[]}
+      />
+    );
     expect(screen.getAllByText('Nothing to show yet')).toHaveLength(2);
   });
 
   it('renders one row per result with stats', () => {
     render(
-      <ResultsPanel isLoading={false} errorMessage="" results={sampleResults} />
+      <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
+        isLoading={false}
+        errorMessage=""
+        results={sampleResults}
+      />
     );
     expect(screen.getByText(/bulbasaur/i)).toBeInTheDocument();
     expect(screen.getByText('hp - 45')).toBeInTheDocument();

@@ -1,10 +1,12 @@
 import type { PokemonResult } from '../../types/pokemon';
 import PageSwitcher from '../PageSwitcher/PageSwitcher';
-import { useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import './ResultsPanel.scss';
 import type { PageDirection } from '../../types/otherTypes';
 
 export type ResultsPanelProps = {
+  currentPage: number;
+  setCurrentPage: Dispatch<SetStateAction<number>>;
   isLoading: boolean;
   errorMessage: string;
   results: PokemonResult[];
@@ -14,12 +16,12 @@ export type ResultsPanelProps = {
 const ITEMS_PER_PAGE = 10;
 
 export default function ResultsPanel({
+  currentPage,
+  setCurrentPage,
   isLoading,
   errorMessage,
   results,
 }: ResultsPanelProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-
   const fullPagesNumber = Math.floor(results.length / ITEMS_PER_PAGE);
   const remainingItems = results.length - fullPagesNumber * ITEMS_PER_PAGE;
   const totalPages = remainingItems ? fullPagesNumber + 1 : fullPagesNumber;
