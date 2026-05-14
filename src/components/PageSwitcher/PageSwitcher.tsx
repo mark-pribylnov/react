@@ -1,9 +1,10 @@
+import type { PageDirection } from '../../types/otherTypes';
 import './PageSwitcher.scss';
 import { useState } from 'react';
 
 export type PageSwitcherProps = {
   currentPage: number;
-  onPageSwitch?: (direction: 'prev' | 'next') => void;
+  onPageSwitch?: (direction: PageDirection) => void;
 };
 
 export default function PageSwitcher({
@@ -12,7 +13,7 @@ export default function PageSwitcher({
 }: PageSwitcherProps) {
   const [pageCount, setPageCount] = useState(currentPage);
 
-  function handleClick(direction: 'prev' | 'next'): void {
+  function handleClick(direction: PageDirection): void {
     if (direction === 'prev' && pageCount >= 2) setPageCount((c) => c - 1);
     if (direction === 'next') setPageCount((c) => c + 1);
     onPageSwitch?.(direction);

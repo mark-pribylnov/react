@@ -1,9 +1,14 @@
 import type { PokemonResult } from '../../types/pokemon';
+import PageSwitcher from '../PageSwitcher/PageSwitcher';
+import { useState } from 'react';
+import './ResultsPanel.scss';
+import type { PageDirection } from '../../types/otherTypes';
 
 export type ResultsPanelProps = {
   isLoading: boolean;
   errorMessage: string;
   results: PokemonResult[];
+  onPageSwitch?: (direction: 'prev' | 'next') => void;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -14,10 +19,19 @@ export default function ResultsPanel({
   results,
 }: ResultsPanelProps) {
   const showedResults = results.slice(0, ITEMS_PER_PAGE);
+  const [currentPage] = useState(1);
+
+  function onPageSwitch(direction: PageDirection) {
+    console.log(direction);
+  }
 
   return (
     <section className="results-section">
-      <h2>Result area:</h2>
+      <header className="section-header">
+        <h2>Result area:</h2>
+        <PageSwitcher currentPage={currentPage} onPageSwitch={onPageSwitch} />
+      </header>
+
       <table className="results-table">
         <thead>
           <tr>

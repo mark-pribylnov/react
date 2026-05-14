@@ -33,8 +33,6 @@ function AppContent() {
     pokemonApiRef.current = new PokemonApi();
   }
 
-  const [currentPage] = useState(1);
-
   const [state, setState] = useState<AppState>(() => ({
     searchQuery: getLastSearch(),
     results: [],
@@ -120,7 +118,6 @@ function AppContent() {
   return (
     <div className="app-container">
       <SearchPanel
-        currentPage={currentPage}
         searchQuery={searchQuery}
         onQueryChange={onQueryChange}
         onSubmit={onSubmit}

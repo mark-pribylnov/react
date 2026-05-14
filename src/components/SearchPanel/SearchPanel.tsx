@@ -1,26 +1,17 @@
 import React, { type ChangeEvent, type SubmitEvent } from 'react';
-import PageSwitcher from '../PageSwitcher/PageSwitcher';
 import './SearchPanel.css';
 
 export type SearchPanelProps = {
   searchQuery: string;
-  currentPage: number;
   onQueryChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSimulateError: () => void;
-  onPageSwitch?: (direction: 'prev' | 'next') => void;
 };
 
 export class SearchPanel extends React.Component<SearchPanelProps> {
   render() {
-    const {
-      searchQuery,
-      currentPage,
-      onQueryChange,
-      onSubmit,
-      onSimulateError,
-      onPageSwitch,
-    } = this.props;
+    const { searchQuery, onQueryChange, onSubmit, onSimulateError } =
+      this.props;
 
     return (
       <section className="search-section">
@@ -44,10 +35,6 @@ export class SearchPanel extends React.Component<SearchPanelProps> {
               Search
             </button>
           </form>
-        </div>
-
-        <div className="search-section__right-side">
-          <PageSwitcher currentPage={currentPage} onPageSwitch={onPageSwitch} />
         </div>
       </section>
     );
