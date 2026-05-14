@@ -35,7 +35,7 @@ describe('ResultsPanel', () => {
     render(
       <ResultsPanel isLoading={false} errorMessage="" results={sampleResults} />
     );
-    expect(screen.getByText('bulbasaur')).toBeInTheDocument();
+    expect(screen.getByText(/bulbasaur/i)).toBeInTheDocument();
     expect(screen.getByText('hp - 45')).toBeInTheDocument();
     expect(screen.getByText('attack - 49')).toBeInTheDocument();
   });

@@ -1,4 +1,11 @@
-import React, { type ChangeEvent, type SubmitEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type SubmitEvent,
+} from 'react';
 import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
@@ -20,132 +27,120 @@ type AppState = {
 
 const LOADING_DELAY_MS = 200;
 
-class AppContent extends React.Component<Record<string, never>, AppState> {
-  private readonly pokemonApi: PokemonApi;
-  currentPage = 1;
-
-  constructor(props: Record<string, never>) {
-    super(props);
-    this.pokemonApi = new PokemonApi();
-    this.state = {
-      searchQuery: getLastSearch(),
-      results: [],
-      lastExecutedSearch: null,
-      isLoading: false,
-      errorMessage: '',
-      shouldSimulateCrash: false,
-    };
+function AppContent() {
+  const pokemonApiRef = useRef<PokemonApi | null>(null);
+  if (pokemonApiRef.current === null) {
+    pokemonApiRef.current = new PokemonApi();
   }
 
-  private readonly onQueryChange = (
-    event: ChangeEvent<HTMLInputElement>
-  ): void => {
-    this.setState({ searchQuery: event.target.value });
-  };
+  const [currentPage] = useState(1);
 
-  private readonly simulateAppError = (): void => {
-    this.setState({ shouldSimulateCrash: true });
-  };
+  const [state, setState] = useState<AppState>(() => ({
+    searchQuery: getLastSearch(),
+    results: [],
+    lastExecutedSearch: null,
+    isLoading: false,
+    errorMessage: '',
+    shouldSimulateCrash: false,
+  }));
 
-  private readonly executeSearch = async (
-    normalizedTerm: string
-  ): Promise<void> => {
-    this.setState({
+  const executeSearch = useCallback(async (normalizedTerm: string) => {
+    const api = pokemonApiRef.current;
+    if (!api) return;
+
+    setState((prev) => ({
+      ...prev,
       isLoading: true,
       errorMessage: '',
       searchQuery: normalizedTerm,
-    });
+    }));
 
     try {
       await delay(LOADING_DELAY_MS);
       const results = normalizedTerm
-        ? await this.pokemonApi.fetchPokemonSearchResults(normalizedTerm)
-        : await this.pokemonApi.fetchFirstPagePokemon();
+        ? await api.fetchPokemonSearchResults(normalizedTerm)
+        : await api.fetchFirstPagePokemon();
 
-      this.setState({
+      setState((prev) => ({
+        ...prev,
         results,
         lastExecutedSearch: normalizedTerm,
         errorMessage:
           normalizedTerm && results.length === 0
             ? 'No results found for this search.'
             : '',
-      });
+      }));
     } catch (error) {
-      this.setState({
+      setState((prev) => ({
+        ...prev,
         results: [],
         lastExecutedSearch: normalizedTerm,
         errorMessage: getErrorMessage(error),
-      });
+      }));
     } finally {
-      this.setState({ isLoading: false });
+      setState((prev) => ({ ...prev, isLoading: false }));
     }
+  }, []);
+
+  useEffect(() => {
+    void executeSearch(getLastSearch().trim());
+  }, [executeSearch]);
+
+  const onQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setState((prev) => ({ ...prev, searchQuery: event.target.value }));
   };
 
-  private readonly loadInitialResults = async (): Promise<void> => {
-    const term = this.state.searchQuery.trim();
-    await this.executeSearch(term);
+  const simulateAppError = (): void => {
+    setState((prev) => ({ ...prev, shouldSimulateCrash: true }));
   };
 
-  componentDidMount(): void {
-    void this.loadInitialResults();
-  }
-
-  private readonly onSubmit = async (
+  const onSubmit = async (
     event: SubmitEvent<HTMLFormElement>
   ): Promise<void> => {
     event.preventDefault();
-    const term = this.state.searchQuery.trim();
-    if (term === this.state.lastExecutedSearch) {
-      if (term !== this.state.searchQuery) {
-        this.setState({ searchQuery: term });
+    const term = state.searchQuery.trim();
+    if (term === state.lastExecutedSearch) {
+      if (term !== state.searchQuery) {
+        setState((prev) => ({ ...prev, searchQuery: term }));
       }
       return;
     }
 
     saveSearchTerm(term);
-    await this.executeSearch(term);
+    await executeSearch(term);
   };
 
-  render() {
-    const {
-      searchQuery,
-      results,
-      isLoading,
-      errorMessage,
-      shouldSimulateCrash,
-    } = this.state;
+  const { searchQuery, results, isLoading, errorMessage, shouldSimulateCrash } =
+    state;
 
-    if (shouldSimulateCrash) {
-      throw new Error('Test error button triggered application crash.');
-    }
-
-    return (
-      <div className="app-container">
-        <SearchPanel
-          currentPage={this.currentPage}
-          searchQuery={searchQuery}
-          onQueryChange={this.onQueryChange}
-          onSubmit={this.onSubmit}
-          onSimulateError={this.simulateAppError}
-        />
-        <ResultsPanel
-          isLoading={isLoading}
-          errorMessage={errorMessage}
-          results={results}
-        />
-      </div>
-    );
+  if (shouldSimulateCrash) {
+    throw new Error('Test error button triggered application crash.');
   }
+
+  return (
+    <div className="app-container">
+      <SearchPanel
+        currentPage={currentPage}
+        searchQuery={searchQuery}
+        onQueryChange={onQueryChange}
+        onSubmit={onSubmit}
+        onSimulateError={simulateAppError}
+      />
+      <ResultsPanel
+        isLoading={isLoading}
+        errorMessage={errorMessage}
+        results={results}
+      />
+    </div>
+  );
 }
 
-class App extends React.Component {
-  render() {
-    return (
-      <AppErrorBoundary>
-        <AppContent />
-      </AppErrorBoundary>
-    );
-  }
+function App() {
+  return (
+    <AppErrorBoundary>
+      <AppContent />
+    </AppErrorBoundary>
+  );
 }
 
 export default App;
