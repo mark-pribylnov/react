@@ -25,7 +25,9 @@ export class SearchPanel extends React.Component<SearchPanelProps> {
             Test Error Boundary
           </button>
           <form action="#" onSubmit={onSubmit}>
+            <label htmlFor="search-terms-input">Search terms</label>
             <input
+              id="search-terms-input"
               type="text"
               className="search-input"
               value={searchQuery}

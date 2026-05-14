@@ -5,7 +5,7 @@ import type {
   PokemonResult,
 } from '../types/pokemon';
 
-const ITEMS_LIMIT = 50;
+const ITEMS_LIMIT = 32;
 
 export class PokemonApi {
   private async requestJson<T>(url: string): Promise<T> {

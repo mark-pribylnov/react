@@ -18,18 +18,33 @@ export default function ResultsPanel({
   errorMessage,
   results,
 }: ResultsPanelProps) {
-  const showedResults = results.slice(0, ITEMS_PER_PAGE);
-  const [currentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const fullPagesNumber = Math.floor(results.length / ITEMS_PER_PAGE);
+  const remainingItems = results.length - fullPagesNumber * ITEMS_PER_PAGE;
+  const totalPages = remainingItems ? fullPagesNumber + 1 : fullPagesNumber;
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const showedResults = results.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   function onPageSwitch(direction: PageDirection) {
-    console.log(direction);
+    let delta = 0;
+
+    if (direction === 'prev' && currentPage >= 2) delta = -1;
+    if (direction === 'next' && totalPages > currentPage) delta = 1;
+
+    setCurrentPage((page) => page + delta);
   }
 
   return (
     <section className="results-section">
       <header className="section-header">
         <h2>Result area:</h2>
-        <PageSwitcher currentPage={currentPage} onPageSwitch={onPageSwitch} />
+        <PageSwitcher
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageSwitch={onPageSwitch}
+        />
       </header>
 
       <table className="results-table">
