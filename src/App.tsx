@@ -14,6 +14,7 @@ import { getErrorMessage } from './lib/httpError';
 import { PokemonApi } from './services/pokemonApi';
 import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
 import type { PokemonResult } from './types/pokemon';
+import { useSearchParams } from 'react-router';
 import './App.css';
 
 type AppState = {
@@ -26,6 +27,12 @@ type AppState = {
 };
 
 const LOADING_DELAY_MS = 200;
+
+function getPageFromUrl(params: URLSearchParams): number {
+  const raw = params.get('page');
+  const parsed = raw ? Number.parseInt(raw, 10) : 1;
+  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
+}
 
 function AppContent() {
   const pokemonApiRef = useRef<PokemonApi | null>(null);
@@ -42,45 +49,67 @@ function AppContent() {
     shouldSimulateCrash: false,
   }));
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = getPageFromUrl(searchParams);
 
-  const executeSearch = useCallback(async (normalizedTerm: string) => {
-    const api = pokemonApiRef.current;
-    if (!api) return;
+  const setCurrentPage = useCallback(
+    (updater: number | ((prev: number) => number)) => {
+      const nextPage =
+        typeof updater === 'function' ? updater(currentPage) : updater;
 
-    setState((prev) => ({
-      ...prev,
-      isLoading: true,
-      errorMessage: '',
-      searchQuery: normalizedTerm,
-    }));
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextPage <= 1) {
+          next.delete('page');
+        } else {
+          next.set('page', String(nextPage));
+        }
+        return next;
+      });
+    },
+    [currentPage, setSearchParams]
+  );
 
-    try {
-      await delay(LOADING_DELAY_MS);
-      const results = normalizedTerm
-        ? await api.fetchPokemonSearchResults(normalizedTerm)
-        : await api.fetchFirstPagePokemon();
+  const executeSearch = useCallback(
+    async (normalizedTerm: string) => {
+      const api = pokemonApiRef.current;
+      if (!api) return;
 
       setState((prev) => ({
         ...prev,
-        results,
-        lastExecutedSearch: normalizedTerm,
-        errorMessage:
-          normalizedTerm && results.length === 0
-            ? 'No results found for this search.'
-            : '',
+        isLoading: true,
+        errorMessage: '',
+        searchQuery: normalizedTerm,
       }));
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        results: [],
-        lastExecutedSearch: normalizedTerm,
-        errorMessage: getErrorMessage(error),
-      }));
-    } finally {
-      setState((prev) => ({ ...prev, isLoading: false }));
-    }
-  }, []);
+
+      try {
+        await delay(LOADING_DELAY_MS);
+        const results = normalizedTerm
+          ? await api.fetchPokemonSearchResults(normalizedTerm)
+          : await api.fetchFirstPagePokemon();
+
+        setState((prev) => ({
+          ...prev,
+          results,
+          lastExecutedSearch: normalizedTerm,
+          errorMessage:
+            normalizedTerm && results.length === 0
+              ? 'No results found for this search.'
+              : '',
+        }));
+      } catch (error) {
+        setState((prev) => ({
+          ...prev,
+          results: [],
+          lastExecutedSearch: normalizedTerm,
+          errorMessage: getErrorMessage(error),
+        }));
+      } finally {
+        setState((prev) => ({ ...prev, isLoading: false }));
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     void executeSearch(getLastSearch().trim());

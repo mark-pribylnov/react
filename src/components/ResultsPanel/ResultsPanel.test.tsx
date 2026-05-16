@@ -23,6 +23,9 @@ describe('ResultsPanel', () => {
       />
     );
     expect(screen.getByRole('status')).toHaveTextContent(/loading results/i);
+    expect(
+      screen.queryByRole('button', { name: /previous page/i })
+    ).not.toBeInTheDocument();
   });
 
   it('shows error message', () => {
@@ -64,5 +67,37 @@ describe('ResultsPanel', () => {
     expect(screen.getByText(/bulbasaur/i)).toBeInTheDocument();
     expect(screen.getByText('hp - 45')).toBeInTheDocument();
     expect(screen.getByText('attack - 49')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /previous page/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /next page/i })).toBeInTheDocument();
+  });
+
+  it('hides pagination while loading and when there are no results', () => {
+    const { rerender } = render(
+      <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
+        isLoading={false}
+        errorMessage=""
+        results={[]}
+      />
+    );
+    expect(
+      screen.queryByRole('button', { name: /previous page/i })
+    ).not.toBeInTheDocument();
+
+    rerender(
+      <ResultsPanel
+        currentPage={1}
+        setCurrentPage={noopSetPage}
+        isLoading
+        errorMessage=""
+        results={sampleResults}
+      />
+    );
+    expect(
+      screen.queryByRole('button', { name: /previous page/i })
+    ).not.toBeInTheDocument();
   });
 });

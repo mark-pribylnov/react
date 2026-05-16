@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpError } from './lib/httpError';
 
@@ -42,7 +43,11 @@ afterEach(() => {
 
 describe('App', () => {
   it('loads results on mount using mocked API', async () => {
-    render(<App />);
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    );
     expect(await screen.findByText(/mew/i)).toBeInTheDocument();
     expect(fetchFirstPagePokemon).toHaveBeenCalled();
   });
@@ -101,6 +106,23 @@ describe('App', () => {
     expect(
       await screen.findByText('Server error. Please try again in a moment.')
     ).toBeInTheDocument();
+  });
+
+  it('shows the page from the URL query param', async () => {
+    const manyResults = Array.from({ length: 11 }, (_, index) => ({
+      name: `pokemon-${index + 1}`,
+      stats: ['hp - 1'],
+    }));
+    fetchFirstPagePokemon.mockResolvedValue(manyResults);
+
+    render(
+      <MemoryRouter initialEntries={['/?page=2']}>
+        <App />
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText(/pokemon-11/i)).toBeInTheDocument();
+    expect(screen.queryByText(/pokemon-1\)/i)).not.toBeInTheDocument();
   });
 
   it('shows the error boundary fallback when the test error button is used', async () => {

@@ -28,6 +28,7 @@ export default function ResultsPanel({
 
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const showedResults = results.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const showPagination = !isLoading && results.length > 0;
 
   function onPageSwitch(direction: PageDirection) {
     let delta = 0;
@@ -35,7 +36,7 @@ export default function ResultsPanel({
     if (direction === 'prev' && currentPage >= 2) delta = -1;
     if (direction === 'next' && totalPages > currentPage) delta = 1;
 
-    setCurrentPage((page) => page + delta);
+    setCurrentPage(currentPage + delta);
   }
 
   function getItemIndexInFullResults(item: PokemonResult) {
@@ -46,11 +47,13 @@ export default function ResultsPanel({
     <section className="results-section">
       <header className="section-header">
         <h2>Result area:</h2>
-        <PageSwitcher
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageSwitch={onPageSwitch}
-        />
+        {showPagination ? (
+          <PageSwitcher
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageSwitch={onPageSwitch}
+          />
+        ) : null}
       </header>
 
       <table className="results-table">
