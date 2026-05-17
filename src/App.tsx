@@ -148,7 +148,7 @@ function AppContent() {
   }
 
   return (
-    <div className="app-container">
+    <>
       <SearchPanel
         searchQuery={searchQuery}
         onQueryChange={onQueryChange}
@@ -162,7 +162,7 @@ function AppContent() {
         errorMessage={errorMessage}
         results={results}
       />
-    </div>
+    </>
   );
 }
 

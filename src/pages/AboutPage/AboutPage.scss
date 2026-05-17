@@ -1,0 +1,43 @@
+.about-page {
+  border: 1px solid black;
+  background-color: rgb(42 148 146);
+  padding: 16px;
+}
+
+.about-page__heading {
+  margin: 0 0 12px;
+}
+
+.about-page__intro {
+  margin: 0 0 16px;
+}
+
+.about-page__details {
+  margin: 0;
+}
+
+.about-page__detail {
+  margin-bottom: 12px;
+}
+
+.about-page__detail:last-child {
+  margin-bottom: 0;
+}
+
+.about-page__term {
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.about-page__definition {
+  margin: 0;
+}
+
+.about-page__link {
+  color: #0a2a4a;
+  font-weight: 600;
+}
+
+.about-page__link:hover {
+  text-decoration: underline;
+}
