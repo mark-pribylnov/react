@@ -7,7 +7,6 @@ describe('SearchPanel', () => {
   it('renders search input, search button, and test error button', () => {
     render(
       <SearchPanel
-        currentPage={1}
         searchQuery=""
         onQueryChange={vi.fn()}
         onSubmit={vi.fn()}
@@ -31,7 +30,6 @@ describe('SearchPanel', () => {
 
     const { user } = renderWithUser(
       <SearchPanel
-        currentPage={1}
         searchQuery=""
         onQueryChange={onQueryChange}
         onSubmit={vi.fn()}
@@ -50,7 +48,6 @@ describe('SearchPanel', () => {
 
     const { user } = renderWithUser(
       <SearchPanel
-        currentPage={1}
         searchQuery="mew"
         onQueryChange={vi.fn()}
         onSubmit={onSubmit}
@@ -67,7 +64,6 @@ describe('SearchPanel', () => {
 
     const { user } = renderWithUser(
       <SearchPanel
-        currentPage={1}
         searchQuery=""
         onQueryChange={vi.fn()}
         onSubmit={vi.fn()}

@@ -31,9 +31,14 @@ describe('searchTermStorage', () => {
     expect(readSavedSearchTerm()).toBe('{"x":1}');
   });
 
-  it('returns empty string when JSON.parse throws', () => {
+  it('returns raw value when JSON.parse throws', () => {
     localStorage.setItem('searchTerm', '{');
-    expect(readSavedSearchTerm()).toBe('');
+    expect(readSavedSearchTerm()).toBe('{');
+  });
+
+  it('reads a plain string saved without JSON encoding', () => {
+    localStorage.setItem('searchTerm', 'eevee');
+    expect(readSavedSearchTerm()).toBe('eevee');
   });
 
   it('writes search term to localStorage', () => {

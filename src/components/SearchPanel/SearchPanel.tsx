@@ -1,4 +1,4 @@
-import React, { type ChangeEvent, type SubmitEvent } from 'react';
+import type { ChangeEvent, SubmitEvent } from 'react';
 import './SearchPanel.css';
 
 export type SearchPanelProps = {
@@ -8,37 +8,37 @@ export type SearchPanelProps = {
   onSimulateError: () => void;
 };
 
-export class SearchPanel extends React.Component<SearchPanelProps> {
-  render() {
-    const { searchQuery, onQueryChange, onSubmit, onSimulateError } =
-      this.props;
-
-    return (
-      <section className="search-section">
-        <div className="search-section__left-side">
-          <h2>Search area:</h2>
-          <button
-            type="button"
-            className="simulate-error-button"
-            onClick={onSimulateError}
-          >
-            Test Error Boundary
+export function SearchPanel({
+  searchQuery,
+  onQueryChange,
+  onSubmit,
+  onSimulateError,
+}: SearchPanelProps) {
+  return (
+    <section className="search-section">
+      <div className="search-section__left-side">
+        <h2>Search area:</h2>
+        <button
+          type="button"
+          className="simulate-error-button"
+          onClick={onSimulateError}
+        >
+          Test Error Boundary
+        </button>
+        <form action="#" onSubmit={onSubmit}>
+          <label htmlFor="search-terms-input">Search terms</label>
+          <input
+            id="search-terms-input"
+            type="text"
+            className="search-input"
+            value={searchQuery}
+            onChange={onQueryChange}
+          />
+          <button type="submit" className="search-button">
+            Search
           </button>
-          <form action="#" onSubmit={onSubmit}>
-            <label htmlFor="search-terms-input">Search terms</label>
-            <input
-              id="search-terms-input"
-              type="text"
-              className="search-input"
-              value={searchQuery}
-              onChange={onQueryChange}
-            />
-            <button type="submit" className="search-button">
-              Search
-            </button>
-          </form>
-        </div>
-      </section>
-    );
-  }
+        </form>
+      </div>
+    </section>
+  );
 }

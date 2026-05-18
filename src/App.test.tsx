@@ -1,10 +1,18 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router';
+import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpError } from './lib/httpError';
 
 const fetchFirstPagePokemon = vi.hoisted(() => vi.fn());
 const fetchPokemonSearchResults = vi.hoisted(() => vi.fn());
+const fetchOnePokemon = vi.hoisted(() =>
+  vi.fn(async (name: string) => ({
+    name,
+    stats: ['hp - 100', 'attack - 50'],
+  }))
+);
 
 vi.mock('./storage/searchTermStorage', () => ({
   getLastSearch: vi.fn(() => ''),
@@ -19,14 +27,28 @@ vi.mock('./services/pokemonApi', () => ({
   PokemonApi: vi.fn().mockImplementation(() => ({
     fetchFirstPagePokemon,
     fetchPokemonSearchResults,
+    fetchOnePokemon,
   })),
 }));
 
 import App from './App';
 import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
-import { renderWithUser } from './test-utils';
 
 const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
+
+function renderApp(initialEntries: string[] = ['/']) {
+  const user = userEvent.setup();
+  const view = render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <Routes>
+        <Route path="/" element={<App />}>
+          <Route path="details" element={<ItemDetailsPanel />} />
+        </Route>
+      </Routes>
+    </MemoryRouter>
+  );
+  return { user, ...view };
+}
 
 beforeEach(() => {
   vi.mocked(getLastSearch).mockReturnValue('');
@@ -43,17 +65,13 @@ afterEach(() => {
 
 describe('App', () => {
   it('loads results on mount using mocked API', async () => {
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>
-    );
+    renderApp();
     expect(await screen.findByText(/mew/i)).toBeInTheDocument();
     expect(fetchFirstPagePokemon).toHaveBeenCalled();
   });
 
   it('saves trimmed search term and runs a matching search on submit', async () => {
-    const { user } = renderWithUser(<App />);
+    const { user } = renderApp();
     await screen.findByText(/mew/i);
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), '  eevee  ');
@@ -66,7 +84,7 @@ describe('App', () => {
 
   it('does not call the API again when the trimmed search is unchanged', async () => {
     vi.mocked(getLastSearch).mockReturnValue('pika');
-    const { user } = renderWithUser(<App />);
+    const { user } = renderApp();
     await screen.findByText(/mew/i);
     const calls = fetchPokemonSearchResults.mock.calls.length;
     await user.click(screen.getByRole('button', { name: /^search$/i }));
@@ -77,7 +95,7 @@ describe('App', () => {
     fetchPokemonSearchResults.mockImplementation(async (term: string) =>
       term === 'missingmon' ? [] : fixtures
     );
-    const { user } = renderWithUser(<App />);
+    const { user } = renderApp();
     await screen.findByText(/mew/i);
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), 'missingmon');
@@ -98,7 +116,7 @@ describe('App', () => {
       }
       return fixtures;
     });
-    const { user } = renderWithUser(<App />);
+    const { user } = renderApp();
     await screen.findByText(/mew/i);
     await user.clear(screen.getByLabelText(/search terms/i));
     await user.type(screen.getByLabelText(/search terms/i), 'x');
@@ -108,6 +126,23 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens and closes the details panel from the results list', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    await user.click(screen.getByText(/1\) mew/i));
+    expect(
+      await screen.findByRole('heading', { name: 'mew' })
+    ).toBeInTheDocument();
+    expect(fetchOnePokemon).toHaveBeenCalledWith('mew');
+
+    await user.click(screen.getByRole('heading', { name: /result area/i }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /close/i })
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it('shows the page from the URL query param', async () => {
     const manyResults = Array.from({ length: 11 }, (_, index) => ({
       name: `pokemon-${index + 1}`,
@@ -115,11 +150,7 @@ describe('App', () => {
     }));
     fetchFirstPagePokemon.mockResolvedValue(manyResults);
 
-    render(
-      <MemoryRouter initialEntries={['/?page=2']}>
-        <App />
-      </MemoryRouter>
-    );
+    renderApp(['/?page=2']);
 
     expect(await screen.findByText(/pokemon-11/i)).toBeInTheDocument();
     expect(screen.queryByText(/pokemon-1\)/i)).not.toBeInTheDocument();
@@ -127,7 +158,7 @@ describe('App', () => {
 
   it('shows the error boundary fallback when the test error button is used', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { user } = renderWithUser(<App />);
+    const { user } = renderApp();
     try {
       await screen.findByText(/mew/i);
       await user.click(

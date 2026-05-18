@@ -1,10 +1,10 @@
 const SEARCH_TERM_KEY = 'searchTerm';
 
 export function readSavedSearchTerm(): string {
-  try {
-    const raw = localStorage.getItem(SEARCH_TERM_KEY);
-    if (!raw) return '';
+  const raw = localStorage.getItem(SEARCH_TERM_KEY);
+  if (!raw) return '';
 
+  try {
     const parsed = JSON.parse(raw) as unknown;
     if (Array.isArray(parsed)) {
       const strings = parsed.filter((v): v is string => typeof v === 'string');
@@ -12,7 +12,7 @@ export function readSavedSearchTerm(): string {
     }
     return typeof parsed === 'string' ? parsed : raw;
   } catch {
-    return '';
+    return raw;
   }
 }
 

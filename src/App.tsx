@@ -1,20 +1,28 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type SubmitEvent,
 } from 'react';
+import { useMatch, useNavigate, useSearchParams } from 'react-router';
 import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
+import MasterDetailLayout from './components/MasterDetailLayout/MasterDetailLayout';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
 import { delay } from './lib/delay';
 import { getErrorMessage } from './lib/httpError';
+import {
+  buildListSearchParams,
+  readDetailsIndexFromSearchParams,
+  readPageFromSearchParams,
+} from './lib/searchParams';
 import { PokemonApi } from './services/pokemonApi';
-import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
+import { useSearchTermStorage } from './hooks/useSearchTermStorage';
+import type { HomeOutletContext } from './types/homeOutletContext';
 import type { PokemonResult } from './types/pokemon';
-import { useSearchParams } from 'react-router';
 import './App.css';
 
 type AppState = {
@@ -28,20 +36,21 @@ type AppState = {
 
 const LOADING_DELAY_MS = 200;
 
-function getPageFromUrl(params: URLSearchParams): number {
-  const raw = params.get('page');
-  const parsed = raw ? Number.parseInt(raw, 10) : 1;
-  return Number.isFinite(parsed) && parsed >= 1 ? parsed : 1;
-}
-
 function AppContent() {
   const pokemonApiRef = useRef<PokemonApi | null>(null);
   if (pokemonApiRef.current === null) {
     pokemonApiRef.current = new PokemonApi();
   }
 
+  const { readSearchTerm, persistSearchTerm } = useSearchTermStorage();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isDetailsOpen = Boolean(useMatch({ path: '/details', end: true }));
+  const currentPage = readPageFromSearchParams(searchParams);
+  const selectedDetailsIndex = readDetailsIndexFromSearchParams(searchParams);
+
   const [state, setState] = useState<AppState>(() => ({
-    searchQuery: getLastSearch(),
+    searchQuery: readSearchTerm(),
     results: [],
     lastExecutedSearch: null,
     isLoading: false,
@@ -49,71 +58,113 @@ function AppContent() {
     shouldSimulateCrash: false,
   }));
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const currentPage = getPageFromUrl(searchParams);
+  const navigateWithListParams = useCallback(
+    (options: {
+      page: number;
+      detailsIndex?: number | null;
+      openDetails?: boolean;
+    }) => {
+      const search = buildListSearchParams({
+        page: options.page,
+        detailsIndex: options.openDetails
+          ? (options.detailsIndex ?? null)
+          : null,
+      });
+      const pathname = options.openDetails ? '/details' : '/';
+      navigate({ pathname, search });
+    },
+    [navigate]
+  );
 
   const setCurrentPage = useCallback(
     (updater: number | ((prev: number) => number)) => {
       const nextPage =
         typeof updater === 'function' ? updater(currentPage) : updater;
 
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        if (nextPage <= 1) {
-          next.delete('page');
-        } else {
-          next.set('page', String(nextPage));
-        }
-        return next;
+      navigateWithListParams({
+        page: nextPage,
+        detailsIndex: selectedDetailsIndex,
+        openDetails: isDetailsOpen,
       });
     },
-    [currentPage, setSearchParams]
+    [currentPage, isDetailsOpen, navigateWithListParams, selectedDetailsIndex]
   );
 
-  const executeSearch = useCallback(
-    async (normalizedTerm: string) => {
-      const api = pokemonApiRef.current;
-      if (!api) return;
+  const openItemDetails = useCallback(
+    (itemIndex: number) => {
+      navigateWithListParams({
+        page: currentPage,
+        detailsIndex: itemIndex,
+        openDetails: true,
+      });
+    },
+    [currentPage, navigateWithListParams]
+  );
+
+  const closeItemDetails = useCallback(() => {
+    navigateWithListParams({
+      page: currentPage,
+      detailsIndex: null,
+      openDetails: false,
+    });
+  }, [currentPage, navigateWithListParams]);
+
+  const fetchPokemonDetails = useCallback(async (name: string) => {
+    const api = pokemonApiRef.current;
+    if (!api) return null;
+    return api.fetchOnePokemon(name);
+  }, []);
+
+  const outletContext = useMemo<HomeOutletContext>(
+    () => ({
+      results: state.results,
+      fetchPokemonDetails,
+      closeDetails: closeItemDetails,
+    }),
+    [closeItemDetails, fetchPokemonDetails, state.results]
+  );
+
+  const executeSearch = useCallback(async (normalizedTerm: string) => {
+    const api = pokemonApiRef.current;
+    if (!api) return;
+
+    setState((prev) => ({
+      ...prev,
+      isLoading: true,
+      errorMessage: '',
+      searchQuery: normalizedTerm,
+    }));
+
+    try {
+      await delay(LOADING_DELAY_MS);
+      const results = normalizedTerm
+        ? await api.fetchPokemonSearchResults(normalizedTerm)
+        : await api.fetchFirstPagePokemon();
 
       setState((prev) => ({
         ...prev,
-        isLoading: true,
-        errorMessage: '',
-        searchQuery: normalizedTerm,
+        results,
+        lastExecutedSearch: normalizedTerm,
+        errorMessage:
+          normalizedTerm && results.length === 0
+            ? 'No results found for this search.'
+            : '',
       }));
-
-      try {
-        await delay(LOADING_DELAY_MS);
-        const results = normalizedTerm
-          ? await api.fetchPokemonSearchResults(normalizedTerm)
-          : await api.fetchFirstPagePokemon();
-
-        setState((prev) => ({
-          ...prev,
-          results,
-          lastExecutedSearch: normalizedTerm,
-          errorMessage:
-            normalizedTerm && results.length === 0
-              ? 'No results found for this search.'
-              : '',
-        }));
-      } catch (error) {
-        setState((prev) => ({
-          ...prev,
-          results: [],
-          lastExecutedSearch: normalizedTerm,
-          errorMessage: getErrorMessage(error),
-        }));
-      } finally {
-        setState((prev) => ({ ...prev, isLoading: false }));
-      }
-    },
-    []
-  );
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        results: [],
+        lastExecutedSearch: normalizedTerm,
+        errorMessage: getErrorMessage(error),
+      }));
+    } finally {
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  }, []);
 
   useEffect(() => {
-    void executeSearch(getLastSearch().trim());
-  }, [executeSearch]);
+    void executeSearch(readSearchTerm().trim());
+  }, [executeSearch, readSearchTerm]);
 
   const onQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setState((prev) => ({ ...prev, searchQuery: event.target.value }));
@@ -135,9 +186,15 @@ function AppContent() {
       return;
     }
 
-    saveSearchTerm(term);
-    setCurrentPage(1);
+    persistSearchTerm(term);
+    navigateWithListParams({ page: 1, detailsIndex: null, openDetails: false });
     await executeSearch(term);
+  };
+
+  const handleListPanelClick = (): void => {
+    if (isDetailsOpen) {
+      closeItemDetails();
+    }
   };
 
   const { searchQuery, results, isLoading, errorMessage, shouldSimulateCrash } =
@@ -155,13 +212,20 @@ function AppContent() {
         onSubmit={onSubmit}
         onSimulateError={simulateAppError}
       />
-      <ResultsPanel
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-        isLoading={isLoading}
-        errorMessage={errorMessage}
-        results={results}
-      />
+      <MasterDetailLayout
+        onListPanelClick={handleListPanelClick}
+        outletContext={outletContext}
+      >
+        <ResultsPanel
+          currentPage={currentPage}
+          setCurrentPage={setCurrentPage}
+          isLoading={isLoading}
+          errorMessage={errorMessage}
+          results={results}
+          selectedDetailsIndex={selectedDetailsIndex}
+          onSelectItem={openItemDetails}
+        />
+      </MasterDetailLayout>
     </>
   );
 }
