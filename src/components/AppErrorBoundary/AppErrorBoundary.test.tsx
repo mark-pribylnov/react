@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithUser } from '../test-utils';
+import { renderWithUser } from '../../test-utils';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 class Boom extends React.Component<{ shouldThrow: boolean }> {
@@ -51,7 +51,9 @@ describe('AppErrorBoundary', () => {
       screen.getByRole('heading', { name: /something went wrong/i })
     ).toBeInTheDocument();
     rerender(<Harness bad={false} />);
-    await user.click(screen.getByRole('button', { name: /reset application/i }));
+    await user.click(
+      screen.getByRole('button', { name: /reset application/i })
+    );
     expect(await screen.findByText('child ok')).toBeInTheDocument();
   });
 });

@@ -10,7 +10,7 @@ describe('PokemonApi', () => {
   });
 
   it('returns null for empty pokemon query', async () => {
-    await expect(api.fetchPokemon('   ')).resolves.toBeNull();
+    await expect(api.fetchOnePokemon('   ')).resolves.toBeNull();
   });
 
   it('fetches a single pokemon', async () => {
@@ -23,7 +23,7 @@ describe('PokemonApi', () => {
       json: async () => payload,
     } as Response);
 
-    const result = await api.fetchPokemon('Ditto');
+    const result = await api.fetchOnePokemon('Ditto');
     expect(result).toEqual({
       name: 'ditto',
       stats: ['hp - 48'],
@@ -41,7 +41,7 @@ describe('PokemonApi', () => {
       json: async () => ({}),
     } as Response);
 
-    await expect(api.fetchPokemon('x')).rejects.toBeInstanceOf(HttpError);
+    await expect(api.fetchOnePokemon('x')).rejects.toBeInstanceOf(HttpError);
   });
 
   it('fetches first page list and details', async () => {
@@ -73,11 +73,7 @@ describe('PokemonApi', () => {
 
   it('fetches matching first page and filters by substring', async () => {
     const list = {
-      results: [
-        { name: 'abra' },
-        { name: 'kadabra' },
-        { name: 'other' },
-      ],
+      results: [{ name: 'abra' }, { name: 'kadabra' }, { name: 'other' }],
     };
     const detailAbra = {
       name: 'abra',
@@ -97,7 +93,7 @@ describe('PokemonApi', () => {
       } as Response;
     });
 
-    const rows = await api.fetchFirstPageMatchingPokemon('abra');
+    const rows = await api.fetchPokemonSearchResults('abra');
     expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(rows.some((r) => r.name === 'abra')).toBe(true);
   });

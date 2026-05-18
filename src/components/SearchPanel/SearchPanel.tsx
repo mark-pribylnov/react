@@ -1,4 +1,5 @@
-import React, { type ChangeEvent, type SubmitEvent } from 'react';
+import type { ChangeEvent, SubmitEvent } from 'react';
+import './SearchPanel.css';
 
 export type SearchPanelProps = {
   searchQuery: string;
@@ -7,12 +8,15 @@ export type SearchPanelProps = {
   onSimulateError: () => void;
 };
 
-export class SearchPanel extends React.Component<SearchPanelProps> {
-  render() {
-    const { searchQuery, onQueryChange, onSubmit, onSimulateError } = this.props;
-
-    return (
-      <section className="search-section">
+export function SearchPanel({
+  searchQuery,
+  onQueryChange,
+  onSubmit,
+  onSimulateError,
+}: SearchPanelProps) {
+  return (
+    <section className="search-section">
+      <div className="search-section__left-side">
         <h2>Search area:</h2>
         <button
           type="button"
@@ -22,18 +26,19 @@ export class SearchPanel extends React.Component<SearchPanelProps> {
           Test Error Boundary
         </button>
         <form action="#" onSubmit={onSubmit}>
+          <label htmlFor="search-terms-input">Search terms</label>
           <input
+            id="search-terms-input"
             type="text"
             className="search-input"
             value={searchQuery}
             onChange={onQueryChange}
-            aria-label="Search terms"
           />
           <button type="submit" className="search-button">
             Search
           </button>
         </form>
-      </section>
-    );
-  }
+      </div>
+    </section>
+  );
 }

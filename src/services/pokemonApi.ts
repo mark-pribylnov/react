@@ -5,7 +5,7 @@ import type {
   PokemonResult,
 } from '../types/pokemon';
 
-const FIRST_PAGE_LIMIT = 10;
+const ITEMS_LIMIT = 32;
 
 export class PokemonApi {
   private async requestJson<T>(url: string): Promise<T> {
@@ -20,7 +20,7 @@ export class PokemonApi {
     return (await response.json()) as T;
   }
 
-  async fetchPokemon(query: string): Promise<PokemonResult | null> {
+  async fetchOnePokemon(query: string): Promise<PokemonResult | null> {
     const slug = query.trim().toLowerCase();
     if (!slug) return null;
 
@@ -36,15 +36,15 @@ export class PokemonApi {
 
   async fetchFirstPagePokemon(): Promise<PokemonResult[]> {
     const listData = await this.requestJson<PokemonListResponse>(
-      `https://pokeapi.co/api/v2/pokemon?limit=${FIRST_PAGE_LIMIT}&offset=0`
+      `https://pokeapi.co/api/v2/pokemon?limit=${ITEMS_LIMIT}&offset=0`
     );
     const detailed = await Promise.all(
-      listData.results.map((item) => this.fetchPokemon(item.name))
+      listData.results.map((item) => this.fetchOnePokemon(item.name))
     );
     return detailed.filter((item): item is PokemonResult => item !== null);
   }
 
-  async fetchFirstPageMatchingPokemon(
+  async fetchPokemonSearchResults(
     searchTerm: string
   ): Promise<PokemonResult[]> {
     const normalizedTerm = searchTerm.toLowerCase();
@@ -57,13 +57,16 @@ export class PokemonApi {
     const listData = await this.requestJson<PokemonListResponse>(
       `https://pokeapi.co/api/v2/pokemon?${params.toString()}`
     );
-    const matches = listData.results
-      .filter((item) => item.name.includes(normalizedTerm))
-      .slice(0, FIRST_PAGE_LIMIT);
+    const matches = listData.results.filter((item) =>
+      item.name.includes(normalizedTerm)
+    );
 
     const detailed = await Promise.all(
-      matches.map((item) => this.fetchPokemon(item.name))
+      matches.map((item) => this.fetchOnePokemon(item.name))
     );
-    return detailed.filter((item): item is PokemonResult => item !== null);
+    const results = detailed.filter(
+      (item): item is PokemonResult => item !== null
+    );
+    return results;
   }
 }

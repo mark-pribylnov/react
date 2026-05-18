@@ -1,0 +1,25 @@
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-table tbody tr:not(.results-row-loading):not(.results-row-error) {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.results-table
+  tbody
+  tr:not(.results-row-loading):not(.results-row-error):hover
+  td {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.results-row-selected td {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.results-row-selected:hover td {
+  background-color: rgba(255, 255, 255, 0.45);
+}

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { renderWithUser } from '../test-utils';
+import { renderWithUser } from '../../test-utils';
 import { SearchPanel } from './SearchPanel';
 
 describe('SearchPanel', () => {
@@ -14,8 +14,12 @@ describe('SearchPanel', () => {
       />
     );
 
-    expect(screen.getByRole('textbox', { name: /search terms/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^search$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('textbox', { name: /search terms/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^search$/i })
+    ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /test error boundary/i })
     ).toBeInTheDocument();
@@ -67,7 +71,9 @@ describe('SearchPanel', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /test error boundary/i }));
+    await user.click(
+      screen.getByRole('button', { name: /test error boundary/i })
+    );
     expect(onSimulateError).toHaveBeenCalledTimes(1);
   });
 });
