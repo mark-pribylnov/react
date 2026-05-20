@@ -1,0 +1,48 @@
+:root,
+:root[data-theme='light'] {
+  --app-body-bg: rgb(89, 89, 89);
+  --app-surface-color: rgb(42 148 146);
+  --app-border-color: #000;
+  --app-text-color: #111;
+  --app-nav-link-bg: rgba(255, 255, 255, 0.35);
+  --app-nav-link-active-bg: rgba(255, 255, 255, 0.75);
+  --app-nav-link-hover-bg: rgba(255, 255, 255, 0.5);
+  --app-table-header-bg: rgba(0, 0, 0, 0.12);
+  --app-row-hover-bg: rgba(255, 255, 255, 0.2);
+  --app-row-selected-bg: rgba(255, 255, 255, 0.35);
+  --app-row-selected-hover-bg: rgba(255, 255, 255, 0.45);
+  --app-error-row-bg: #c49139;
+  --app-spinner-track: rgba(0, 0, 0, 0.25);
+  --app-link-color: #0a2a4a;
+  --app-button-bg: #f5f5f5;
+  --app-button-hover-bg: #e8e8e8;
+  --app-not-found-bg: #fff4d6;
+  --app-not-found-border: #5a3d00;
+}
+
+:root[data-theme='dark'] {
+  --app-body-bg: #1a1a2e;
+  --app-surface-color: #16213e;
+  --app-border-color: #4a5568;
+  --app-text-color: #e2e8f0;
+  --app-nav-link-bg: rgba(255, 255, 255, 0.08);
+  --app-nav-link-active-bg: rgba(255, 255, 255, 0.2);
+  --app-nav-link-hover-bg: rgba(255, 255, 255, 0.14);
+  --app-table-header-bg: rgba(255, 255, 255, 0.08);
+  --app-row-hover-bg: rgba(255, 255, 255, 0.06);
+  --app-row-selected-bg: rgba(255, 255, 255, 0.12);
+  --app-row-selected-hover-bg: rgba(255, 255, 255, 0.16);
+  --app-error-row-bg: #8b6914;
+  --app-spinner-track: rgba(255, 255, 255, 0.25);
+  --app-link-color: #90cdf4;
+  --app-button-bg: rgba(255, 255, 255, 0.1);
+  --app-button-hover-bg: rgba(255, 255, 255, 0.18);
+  --app-not-found-bg: #2d3748;
+  --app-not-found-border: #718096;
+}
+
+body {
+  margin: 0;
+  background-color: var(--app-body-bg);
+  color: var(--app-text-color);
+}

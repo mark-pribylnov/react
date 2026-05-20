@@ -22,7 +22,8 @@
 .master-detail__details {
   flex: 1 1 45%;
   min-width: 0;
-  border: 1px solid black;
-  background-color: rgb(42 148 146);
+  border: 1px solid var(--app-border-color);
+  background-color: var(--app-surface-color);
+  color: var(--app-text-color);
   padding: 10px;
 }
