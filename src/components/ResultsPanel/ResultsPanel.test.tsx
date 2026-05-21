@@ -1,5 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, type RenderOptions } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { setupStore } from '../../store/store';
 import ResultsPanel from './ResultsPanel';
 
 const noopSetPage = vi.fn();
@@ -11,9 +14,21 @@ const sampleResults = [
   },
 ];
 
+function renderResultsPanel(
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) {
+  const store = setupStore();
+
+  return render(ui, {
+    wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+    ...options,
+  });
+}
+
 describe('ResultsPanel', () => {
   it('shows loading state', () => {
-    render(
+    renderResultsPanel(
       <ResultsPanel
         currentPage={1}
         setCurrentPage={noopSetPage}
@@ -29,7 +44,7 @@ describe('ResultsPanel', () => {
   });
 
   it('shows error message', () => {
-    render(
+    renderResultsPanel(
       <ResultsPanel
         currentPage={1}
         setCurrentPage={noopSetPage}
@@ -42,7 +57,7 @@ describe('ResultsPanel', () => {
   });
 
   it('shows empty placeholder when there are no results', () => {
-    render(
+    renderResultsPanel(
       <ResultsPanel
         currentPage={1}
         setCurrentPage={noopSetPage}
@@ -51,11 +66,11 @@ describe('ResultsPanel', () => {
         results={[]}
       />
     );
-    expect(screen.getAllByText('Nothing to show yet')).toHaveLength(2);
+    expect(screen.getByText('Nothing to show yet')).toBeInTheDocument();
   });
 
   it('renders one row per result with stats', () => {
-    render(
+    renderResultsPanel(
       <ResultsPanel
         currentPage={1}
         setCurrentPage={noopSetPage}
@@ -68,13 +83,16 @@ describe('ResultsPanel', () => {
     expect(screen.getByText('hp - 45')).toBeInTheDocument();
     expect(screen.getByText('attack - 49')).toBeInTheDocument();
     expect(
+      screen.getByRole('checkbox', { name: /select bulbasaur/i })
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole('button', { name: /previous page/i })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /next page/i })).toBeInTheDocument();
   });
 
   it('hides pagination while loading and when there are no results', () => {
-    const { rerender } = render(
+    const { rerender } = renderResultsPanel(
       <ResultsPanel
         currentPage={1}
         setCurrentPage={noopSetPage}

@@ -16,10 +16,24 @@
   background-color: var(--app-row-hover-bg);
 }
 
-.results-row-selected td {
+.results-table__select-col {
+  width: 4.5rem;
+}
+
+.results-table__select-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.results-row-checked td {
   background-color: var(--app-row-selected-bg);
 }
 
-.results-row-selected:hover td {
+.results-row-checked:hover td {
   background-color: var(--app-row-selected-hover-bg);
+}
+
+.results-row-details-open td {
+  outline: 2px solid var(--app-border-color);
+  outline-offset: -2px;
 }

@@ -1,8 +1,10 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { searchReducer } from './searchSlice';
+import { selectedItemsReducer } from './selectedItemsSlice';
 
 const rootReducer = combineReducers({
   search: searchReducer,
+  selectedItems: selectedItemsReducer,
 });
 
 export function setupStore(

@@ -1,9 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ThemeProvider } from './context/ThemeProvider.tsx';
 import { HttpError } from './lib/httpError';
+import AppLayout from './layouts/AppLayout';
+import AboutPage from './pages/AboutPage/AboutPage';
+import { setupStore } from './store/store';
 
 const fetchFirstPagePokemon = vi.hoisted(() => vi.fn());
 const fetchPokemonSearchResults = vi.hoisted(() => vi.fn());
@@ -37,17 +42,29 @@ import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
 const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
 
 function renderApp(initialEntries: string[] = ['/']) {
+  const store = setupStore();
   const user = userEvent.setup();
-  const view = render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <Routes>
-        <Route path="/" element={<App />}>
-          <Route path="details" element={<ItemDetailsPanel />} />
-        </Route>
-      </Routes>
-    </MemoryRouter>
-  );
-  return { user, ...view };
+
+  return {
+    user,
+    store,
+    ...render(
+      <Provider store={store}>
+        <ThemeProvider>
+          <MemoryRouter initialEntries={initialEntries}>
+            <Routes>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<App />}>
+                  <Route path="details" element={<ItemDetailsPanel />} />
+                </Route>
+                <Route path="/about" element={<AboutPage />} />
+              </Route>
+            </Routes>
+          </MemoryRouter>
+        </ThemeProvider>
+      </Provider>
+    ),
+  };
 }
 
 beforeEach(() => {
@@ -126,6 +143,59 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
+  it('stores checkbox selections in Redux and keeps them across route navigation', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+
+    const checkbox = screen.getByRole('checkbox', { name: /select mew/i });
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    await user.click(screen.getByRole('link', { name: /about/i }));
+    expect(
+      await screen.findByRole('heading', { name: /about/i })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('link', { name: /search/i }));
+    await screen.findByText(/mew/i);
+    expect(screen.getByRole('checkbox', { name: /select mew/i })).toBeChecked();
+  });
+
+  it('removes an item from Redux when its checkbox is unchecked', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+
+    const checkbox = screen.getByRole('checkbox', { name: /select mew/i });
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    await user.click(checkbox);
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('keeps checkbox selections when switching result pages', async () => {
+    const manyResults = Array.from({ length: 11 }, (_, index) => ({
+      name: `pokemon-${index + 1}`,
+      stats: ['hp - 1'],
+    }));
+    fetchFirstPagePokemon.mockResolvedValue(manyResults);
+
+    const { user } = renderApp(['/?page=2']);
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /select pokemon-11/i,
+    });
+
+    await user.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: /previous page/i }));
+    await user.click(screen.getByRole('button', { name: /next page/i }));
+
+    expect(
+      screen.getByRole('checkbox', { name: /select pokemon-11/i })
+    ).toBeChecked();
+  });
+
   it('opens and closes the details panel from the results list', async () => {
     const { user } = renderApp();
     await screen.findByText(/mew/i);
@@ -141,6 +211,27 @@ describe('App', () => {
         screen.queryByRole('button', { name: /close/i })
       ).not.toBeInTheDocument();
     });
+  });
+
+  it('switches details to another item while keeping the panel open', async () => {
+    fetchFirstPagePokemon.mockResolvedValue([
+      { name: 'mew', stats: ['hp - 100'] },
+      { name: 'eevee', stats: ['hp - 55'] },
+    ]);
+
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    await user.click(screen.getByText(/1\) mew/i));
+    expect(
+      await screen.findByRole('heading', { name: 'mew', level: 3 })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByText(/2\) eevee/i));
+    expect(
+      await screen.findByRole('heading', { name: 'eevee', level: 3 })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
+    expect(fetchOnePokemon).toHaveBeenCalledWith('eevee');
   });
 
   it('shows the page from the URL query param', async () => {
