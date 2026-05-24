@@ -36,6 +36,12 @@ vi.mock('./services/pokemonApi', () => ({
   })),
 }));
 
+const downloadSelectedItemsCsv = vi.hoisted(() => vi.fn());
+
+vi.mock('./lib/downloadSelectedItemsCsv', () => ({
+  downloadSelectedItemsCsv,
+}));
+
 import App from './App';
 import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
 
@@ -171,6 +177,38 @@ describe('App', () => {
 
     await user.click(checkbox);
     expect(checkbox).not.toBeChecked();
+  });
+
+  it('shows the flyout with selected count and hides it after unselect all', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+
+    expect(
+      screen.queryByRole('region', { name: /selected items/i })
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('checkbox', { name: /select mew/i }));
+    expect(screen.getByRole('region', { name: /selected items/i })).toHaveTextContent(
+      /1 item selected/i
+    );
+
+    await user.click(screen.getByRole('button', { name: /unselect all/i }));
+    expect(
+      screen.queryByRole('region', { name: /selected items/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /select mew/i })).not.toBeChecked();
+  });
+
+  it('downloads selected items from the flyout', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+
+    await user.click(screen.getByRole('checkbox', { name: /select mew/i }));
+    await user.click(screen.getByRole('button', { name: /^download$/i }));
+
+    expect(downloadSelectedItemsCsv).toHaveBeenCalledWith([
+      { pokemon: { name: 'mew', stats: ['hp - 100'] }, listIndex: 1 },
+    ]);
   });
 
   it('keeps checkbox selections when switching result pages', async () => {

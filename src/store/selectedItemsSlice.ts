@@ -1,9 +1,9 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { getPokemonItemKey } from '../lib/pokemonItemKey';
-import type { PokemonResult } from '../types/pokemon';
+import type { SelectedPokemonItem } from '../types/selectedPokemonItem';
 
 export type SelectedItemsState = {
-  items: PokemonResult[];
+  items: SelectedPokemonItem[];
 };
 
 const initialState: SelectedItemsState = {
@@ -14,10 +14,10 @@ const selectedItemsSlice = createSlice({
   name: 'selectedItems',
   initialState,
   reducers: {
-    toggleSelectedItem(state, action: PayloadAction<PokemonResult>) {
-      const key = getPokemonItemKey(action.payload);
+    toggleSelectedItem(state, action: PayloadAction<SelectedPokemonItem>) {
+      const key = getPokemonItemKey(action.payload.pokemon);
       const index = state.items.findIndex(
-        (item) => getPokemonItemKey(item) === key
+        (item) => getPokemonItemKey(item.pokemon) === key
       );
 
       if (index === -1) {

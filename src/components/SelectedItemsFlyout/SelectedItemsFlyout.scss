@@ -1,0 +1,40 @@
+.selected-items-flyout {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--app-border-color);
+  background-color: var(--app-surface-color);
+  color: var(--app-text-color);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.selected-items-flyout__count {
+  margin: 0;
+  font-weight: 600;
+}
+
+.selected-items-flyout__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selected-items-flyout__button {
+  padding: 8px 14px;
+  border: 1px solid var(--app-border-color);
+  background-color: var(--app-button-bg);
+  color: var(--app-text-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selected-items-flyout__button:hover {
+  background-color: var(--app-button-hover-bg);
+}

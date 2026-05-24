@@ -30,7 +30,9 @@ export default function ResultsPanel({
 }: ResultsPanelProps) {
   const dispatch = useAppDispatch();
   const selectedItems = useAppSelector((state) => state.selectedItems.items);
-  const selectedKeys = new Set(selectedItems.map(getPokemonItemKey));
+  const selectedKeys = new Set(
+    selectedItems.map((item) => getPokemonItemKey(item.pokemon))
+  );
 
   const fullPagesNumber = Math.floor(results.length / ITEMS_PER_PAGE);
   const remainingItems = results.length - fullPagesNumber * ITEMS_PER_PAGE;
@@ -64,10 +66,11 @@ export default function ResultsPanel({
 
   function handleCheckboxChange(
     event: ChangeEvent<HTMLInputElement>,
-    item: PokemonResult
+    item: PokemonResult,
+    listIndex: number
   ): void {
     event.stopPropagation();
-    dispatch(toggleSelectedItem(item));
+    dispatch(toggleSelectedItem({ pokemon: item, listIndex }));
   }
 
   return (
@@ -137,7 +140,9 @@ export default function ResultsPanel({
                       type="checkbox"
                       checked={isChecked}
                       aria-label={`Select ${result.name}`}
-                      onChange={(event) => handleCheckboxChange(event, result)}
+                      onChange={(event) =>
+                        handleCheckboxChange(event, result, itemIndex)
+                      }
                       onClick={(event) => event.stopPropagation()}
                     />
                   </td>
