@@ -1,8 +1,10 @@
 import type { PokemonResult } from '../../types/pokemon';
 import PageSwitcher from '../PageSwitcher/PageSwitcher';
-import type { Dispatch, MouseEvent, SetStateAction } from 'react';
+import type { ChangeEvent, Dispatch, MouseEvent, SetStateAction } from 'react';
 import './ResultsPanel.scss';
 import type { PageDirection } from '../../types/otherTypes';
+import { getPokemonItemKey } from '../../lib/pokemonItemKey';
+import { toggleSelectedItem, useAppDispatch, useAppSelector } from '../../store';
 
 export type ResultsPanelProps = {
   currentPage: number;
@@ -26,6 +28,12 @@ export default function ResultsPanel({
   selectedDetailsIndex = null,
   onSelectItem,
 }: ResultsPanelProps) {
+  const dispatch = useAppDispatch();
+  const selectedItems = useAppSelector((state) => state.selectedItems.items);
+  const selectedKeys = new Set(
+    selectedItems.map((item) => getPokemonItemKey(item.pokemon))
+  );
+
   const fullPagesNumber = Math.floor(results.length / ITEMS_PER_PAGE);
   const remainingItems = results.length - fullPagesNumber * ITEMS_PER_PAGE;
   const totalPages = remainingItems ? fullPagesNumber + 1 : fullPagesNumber;
@@ -33,6 +41,7 @@ export default function ResultsPanel({
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const showedResults = results.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   const showPagination = !isLoading && results.length > 0;
+  const columnCount = 3;
 
   function onPageSwitch(direction: PageDirection) {
     let delta = 0;
@@ -55,6 +64,15 @@ export default function ResultsPanel({
     onSelectItem?.(itemIndex);
   }
 
+  function handleCheckboxChange(
+    event: ChangeEvent<HTMLInputElement>,
+    item: PokemonResult,
+    listIndex: number
+  ): void {
+    event.stopPropagation();
+    dispatch(toggleSelectedItem({ pokemon: item, listIndex }));
+  }
+
   return (
     <section className="results-section">
       <header className="section-header">
@@ -71,6 +89,9 @@ export default function ResultsPanel({
       <table className="results-table">
         <thead>
           <tr>
+            <th scope="col" className="results-table__select-col">
+              Select
+            </th>
             <th scope="col">Pokemon Name</th>
             <th scope="col">Pokemon Stats</th>
           </tr>
@@ -78,7 +99,7 @@ export default function ResultsPanel({
         <tbody>
           {isLoading ? (
             <tr className="results-row-loading">
-              <td colSpan={2}>
+              <td colSpan={columnCount}>
                 <div className="loading-indicator" role="status">
                   <span className="loading-spinner" />
                   Loading results...
@@ -87,36 +108,54 @@ export default function ResultsPanel({
             </tr>
           ) : errorMessage ? (
             <tr className="results-row-error">
-              <td colSpan={2} role="alert">
+              <td colSpan={columnCount} role="alert">
                 {errorMessage}
               </td>
             </tr>
           ) : results.length === 0 ? (
             <tr>
-              <td>Nothing to show yet</td>
-              <td>Nothing to show yet</td>
+              <td colSpan={columnCount}>Nothing to show yet</td>
             </tr>
           ) : (
             showedResults.map((result) => {
               const itemIndex = getItemIndexInFullResults(result) + 1;
-              const isSelected = selectedDetailsIndex === itemIndex;
+              const itemKey = getPokemonItemKey(result);
+              const isChecked = selectedKeys.has(itemKey);
+              const isDetailsOpen = selectedDetailsIndex === itemIndex;
+              const rowClassName = [
+                isChecked ? 'results-row-checked' : '',
+                isDetailsOpen ? 'results-row-details-open' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
 
               return (
-              <tr
-                key={`${result.name}-${result.stats.join('|')}`}
-                className={isSelected ? 'results-row-selected' : undefined}
-                onClick={(event) => handleRowClick(event, itemIndex)}
-              >
-                <td>{`${itemIndex}) ${result.name}`}</td>
-                <td>
-                  <ul>
-                    {result.stats.map((stat) => (
-                      <li key={stat}>{stat}</li>
-                    ))}
-                  </ul>
-                </td>
-              </tr>
-            );
+                <tr
+                  key={itemKey}
+                  className={rowClassName || undefined}
+                  onClick={(event) => handleRowClick(event, itemIndex)}
+                >
+                  <td className="results-table__select-cell">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      aria-label={`Select ${result.name}`}
+                      onChange={(event) =>
+                        handleCheckboxChange(event, result, itemIndex)
+                      }
+                      onClick={(event) => event.stopPropagation()}
+                    />
+                  </td>
+                  <td>{`${itemIndex}) ${result.name}`}</td>
+                  <td>
+                    <ul>
+                      {result.stats.map((stat) => (
+                        <li key={stat}>{stat}</li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              );
             })
           )}
         </tbody>

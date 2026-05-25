@@ -71,7 +71,7 @@ export default function ItemDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [selectedListItem, fetchPokemonDetails]);
+  }, [detailsIndex, selectedListItem?.name, fetchPokemonDetails]);
 
   if (detailsIndex == null) {
     return null;

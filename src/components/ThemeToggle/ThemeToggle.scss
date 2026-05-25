@@ -1,0 +1,12 @@
+.theme-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.theme-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: capitalize;
+  cursor: pointer;
+}

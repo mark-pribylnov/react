@@ -13,13 +13,27 @@
   tbody
   tr:not(.results-row-loading):not(.results-row-error):hover
   td {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--app-row-hover-bg);
 }
 
-.results-row-selected td {
-  background-color: rgba(255, 255, 255, 0.35);
+.results-table__select-col {
+  width: 4.5rem;
 }
 
-.results-row-selected:hover td {
-  background-color: rgba(255, 255, 255, 0.45);
+.results-table__select-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.results-row-checked td {
+  background-color: var(--app-row-selected-bg);
+}
+
+.results-row-checked:hover td {
+  background-color: var(--app-row-selected-hover-bg);
+}
+
+.results-row-details-open td {
+  outline: 2px solid var(--app-border-color);
+  outline-offset: -2px;
 }

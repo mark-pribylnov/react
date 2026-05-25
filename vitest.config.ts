@@ -13,7 +13,7 @@ export default mergeConfig(
       css: true,
       coverage: {
         provider: 'v8',
-        reporter: ['text', 'html'],
+        reporter: ['json-summary', 'text-summary', 'text', 'html'],
         include: ['src/**/*.{js,jsx,ts,tsx}'],
         exclude: [
           'src/**/*.test.{js,jsx,ts,tsx}',

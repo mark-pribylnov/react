@@ -18,14 +18,15 @@
 
 .item-details-panel__close {
   padding: 6px 12px;
-  border: 1px solid #111;
-  background-color: #f5f5f5;
+  border: 1px solid var(--app-border-color);
+  background-color: var(--app-button-bg);
+  color: var(--app-text-color);
   font-weight: 600;
   cursor: pointer;
 }
 
 .item-details-panel__close:hover {
-  background-color: #e8e8e8;
+  background-color: var(--app-button-hover-bg);
 }
 
 .item-details-panel__error {
