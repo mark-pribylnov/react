@@ -1,8 +1,8 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { delay } from '../lib/delay';
 import { getErrorMessage } from '../lib/httpError';
-import { PokemonApi } from '../services/pokemonApi';
 import type { PokemonResult } from '../types/pokemon';
+import { pokemonApi } from './pokemonApi';
 
 const LOADING_DELAY_MS = 200;
 
@@ -24,16 +24,29 @@ const initialState: SearchState = {
   shouldSimulateCrash: false,
 };
 
-export const runSearch = createAsyncThunk(
+export const runSearch = createAsyncThunk<
+  { normalizedTerm: string; results: PokemonResult[] },
+  string,
+  { rejectValue: string }
+>(
   'search/runSearch',
-  async (normalizedTerm: string) => {
+  async (normalizedTerm, { dispatch, rejectWithValue }) => {
     await delay(LOADING_DELAY_MS);
-    const api = new PokemonApi();
-    const results = normalizedTerm
-      ? await api.fetchPokemonSearchResults(normalizedTerm)
-      : await api.fetchFirstPagePokemon();
 
-    return { normalizedTerm, results };
+    const request = normalizedTerm
+      ? dispatch(
+          pokemonApi.endpoints.getPokemonSearchResults.initiate(normalizedTerm)
+        )
+      : dispatch(pokemonApi.endpoints.getFirstPagePokemon.initiate());
+
+    try {
+      const results = await request.unwrap();
+      return { normalizedTerm, results };
+    } catch (error) {
+      return rejectWithValue(getErrorMessage(error));
+    } finally {
+      request.unsubscribe();
+    }
   }
 );
 
@@ -73,7 +86,9 @@ const searchSlice = createSlice({
         state.results = [];
         state.lastExecutedSearch = action.meta.arg;
         state.errorMessage =
-          action.error.message ?? getErrorMessage(action.error);
+          action.payload ??
+          action.error.message ??
+          getErrorMessage(action.error);
       });
   },
 });

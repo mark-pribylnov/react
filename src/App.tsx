@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   type ChangeEvent,
   type SubmitEvent,
 } from 'react';
@@ -17,7 +16,6 @@ import {
   readDetailsIndexFromSearchParams,
   readPageFromSearchParams,
 } from './lib/searchParams';
-import { PokemonApi } from './services/pokemonApi';
 import {
   normalizeSearchQuery,
   runSearch,
@@ -39,11 +37,6 @@ function AppContent() {
     errorMessage,
     shouldSimulateCrash,
   } = useAppSelector((state) => state.search);
-
-  const pokemonApiRef = useRef<PokemonApi | null>(null);
-  if (pokemonApiRef.current === null) {
-    pokemonApiRef.current = new PokemonApi();
-  }
 
   const { readSearchTerm, persistSearchTerm } = useSearchTermStorage();
   const navigate = useNavigate();
@@ -103,19 +96,12 @@ function AppContent() {
     });
   }, [currentPage, navigateWithListParams]);
 
-  const fetchPokemonDetails = useCallback(async (name: string) => {
-    const api = pokemonApiRef.current;
-    if (!api) return null;
-    return api.fetchOnePokemon(name);
-  }, []);
-
   const outletContext = useMemo<HomeOutletContext>(
     () => ({
       results,
-      fetchPokemonDetails,
       closeDetails: closeItemDetails,
     }),
-    [closeItemDetails, fetchPokemonDetails, results]
+    [closeItemDetails, results]
   );
 
   useEffect(() => {

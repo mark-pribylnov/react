@@ -5,19 +5,71 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from './context/ThemeProvider.tsx';
-import { HttpError } from './lib/httpError';
-import AppLayout from './layouts/AppLayout';
 import AboutPage from './pages/AboutPage/AboutPage';
+import AppLayout from './layouts/AppLayout';
 import { setupStore } from './store/store';
+import { createMockFetchResponse, getFetchRequestUrl } from './test-utils/createMockFetchResponse';
 
-const fetchFirstPagePokemon = vi.hoisted(() => vi.fn());
-const fetchPokemonSearchResults = vi.hoisted(() => vi.fn());
-const fetchOnePokemon = vi.hoisted(() =>
-  vi.fn(async (name: string) => ({
-    name,
-    stats: ['hp - 100', 'attack - 50'],
-  }))
+type TestListItem = { name: string; stats?: string[] };
+
+const mockFetch = vi.hoisted(() => vi.fn());
+const testListItems = vi.hoisted(
+  (): TestListItem[] => [{ name: 'mew', stats: ['hp - 100'] }]
 );
+const searchListItems = vi.hoisted(
+  (): TestListItem[] => [{ name: 'mew', stats: ['hp - 100'] }]
+);
+const searchErrorTerm = vi.hoisted(() => ({ current: null as string | null }));
+
+function createPokemonDetail(name: string) {
+  const listItem = [...testListItems, ...searchListItems].find(
+    (item) => item.name === name
+  );
+  if (listItem?.stats?.length === 1 && listItem.stats[0] === 'hp - 100') {
+    return {
+      name,
+      stats: [{ base_stat: 100, stat: { name: 'hp' } }],
+    };
+  }
+  if (name === 'eevee') {
+    return {
+      name,
+      stats: [{ base_stat: 55, stat: { name: 'hp' } }],
+    };
+  }
+  return {
+    name,
+    stats: [{ base_stat: 1, stat: { name: 'hp' } }],
+  };
+}
+
+function installFetchMock() {
+  mockFetch.mockImplementation(async (input: RequestInfo | URL) => {
+    const url = getFetchRequestUrl(input);
+
+    if (url.includes('search=')) {
+      const searchTerm = new URL(url).searchParams.get('search');
+      if (searchErrorTerm.current && searchTerm === searchErrorTerm.current) {
+        return createMockFetchResponse({}, { ok: false, status: 500, statusText: 'err' });
+      }
+
+      return createMockFetchResponse({
+        results: searchListItems.map((item) => ({ name: item.name })),
+      });
+    }
+
+    if (url.includes('?limit=')) {
+      return createMockFetchResponse({
+        results: testListItems.map((item) => ({ name: item.name })),
+      });
+    }
+
+    const slug = url.match(/\/pokemon\/([^/?]+)/)?.[1] ?? 'mew';
+    return createMockFetchResponse(createPokemonDetail(decodeURIComponent(slug)));
+  });
+
+  vi.spyOn(globalThis, 'fetch').mockImplementation(mockFetch);
+}
 
 vi.mock('./storage/searchTermStorage', () => ({
   getLastSearch: vi.fn(() => ''),
@@ -26,14 +78,6 @@ vi.mock('./storage/searchTermStorage', () => ({
 
 vi.mock('./lib/delay', () => ({
   delay: vi.fn(() => Promise.resolve()),
-}));
-
-vi.mock('./services/pokemonApi', () => ({
-  PokemonApi: vi.fn().mockImplementation(() => ({
-    fetchFirstPagePokemon,
-    fetchPokemonSearchResults,
-    fetchOnePokemon,
-  })),
 }));
 
 const downloadSelectedItemsCsv = vi.hoisted(() => vi.fn());
@@ -46,6 +90,21 @@ import App from './App';
 import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
 
 const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
+
+function resetFetchFixtures() {
+  testListItems.length = 0;
+  testListItems.push(...fixtures);
+  searchListItems.length = 0;
+  searchListItems.push(...fixtures);
+  searchErrorTerm.current = null;
+  installFetchMock();
+}
+
+function countFetchCalls(matcher: (url: string) => boolean): number {
+  return mockFetch.mock.calls.filter(([input]) =>
+    matcher(getFetchRequestUrl(input))
+  ).length;
+}
 
 function renderApp(initialEntries: string[] = ['/']) {
   const store = setupStore();
@@ -75,22 +134,20 @@ function renderApp(initialEntries: string[] = ['/']) {
 
 beforeEach(() => {
   vi.mocked(getLastSearch).mockReturnValue('');
-  fetchFirstPagePokemon.mockResolvedValue(fixtures);
-  fetchPokemonSearchResults.mockImplementation(async () => fixtures);
+  resetFetchFixtures();
 });
 
 afterEach(() => {
   vi.clearAllMocks();
   vi.mocked(getLastSearch).mockReturnValue('');
-  fetchFirstPagePokemon.mockResolvedValue(fixtures);
-  fetchPokemonSearchResults.mockImplementation(async () => fixtures);
+  resetFetchFixtures();
 });
 
 describe('App', () => {
   it('loads results on mount using mocked API', async () => {
     renderApp();
     expect(await screen.findByText(/mew/i)).toBeInTheDocument();
-    expect(fetchFirstPagePokemon).toHaveBeenCalled();
+    expect(countFetchCalls((url) => url.includes('?limit=32'))).toBeGreaterThan(0);
   });
 
   it('saves trimmed search term and runs a matching search on submit', async () => {
@@ -102,22 +159,25 @@ describe('App', () => {
     await waitFor(() => {
       expect(saveSearchTerm).toHaveBeenCalledWith('eevee');
     });
-    expect(fetchPokemonSearchResults).toHaveBeenCalledWith('eevee');
+    expect(countFetchCalls((url) => url.includes('search=eevee'))).toBeGreaterThan(
+      0
+    );
   });
 
   it('does not call the API again when the trimmed search is unchanged', async () => {
     vi.mocked(getLastSearch).mockReturnValue('pika');
+    searchListItems.length = 0;
+    searchListItems.push({ name: 'pikachu', stats: ['hp - 35'] });
     const { user } = renderApp();
-    await screen.findByText(/mew/i);
-    const calls = fetchPokemonSearchResults.mock.calls.length;
+    await screen.findByText(/pikachu/i);
+    const calls = countFetchCalls((url) => url.includes('search='));
     await user.click(screen.getByRole('button', { name: /^search$/i }));
-    expect(fetchPokemonSearchResults.mock.calls.length).toBe(calls);
+    expect(countFetchCalls((url) => url.includes('search='))).toBe(calls);
   });
 
   it('shows no-results copy when the API returns an empty list', async () => {
-    fetchPokemonSearchResults.mockImplementation(async (term: string) =>
-      term === 'missingmon' ? [] : fixtures
-    );
+    searchListItems.length = 0;
+    searchListItems.push({ name: 'other', stats: ['hp - 1'] });
     const { user } = renderApp();
     await screen.findByText(/mew/i);
     await user.clear(screen.getByLabelText(/search terms/i));
@@ -129,16 +189,7 @@ describe('App', () => {
   });
 
   it('shows an error message when the API layer throws', async () => {
-    fetchPokemonSearchResults.mockImplementation(async (term: string) => {
-      if (term === 'x') {
-        throw new HttpError(
-          500,
-          'err',
-          'Server error. Please try again in a moment.'
-        );
-      }
-      return fixtures;
-    });
+    searchErrorTerm.current = 'x';
     const { user } = renderApp();
     await screen.findByText(/mew/i);
     await user.clear(screen.getByLabelText(/search terms/i));
@@ -212,11 +263,14 @@ describe('App', () => {
   });
 
   it('keeps checkbox selections when switching result pages', async () => {
-    const manyResults = Array.from({ length: 11 }, (_, index) => ({
-      name: `pokemon-${index + 1}`,
-      stats: ['hp - 1'],
-    }));
-    fetchFirstPagePokemon.mockResolvedValue(manyResults);
+    testListItems.length = 0;
+    testListItems.push(
+      ...Array.from({ length: 11 }, (_, index) => ({
+        name: `pokemon-${index + 1}`,
+        stats: ['hp - 1'],
+      }))
+    );
+    installFetchMock();
 
     const { user } = renderApp(['/?page=2']);
     const checkbox = await screen.findByRole('checkbox', {
@@ -241,7 +295,9 @@ describe('App', () => {
     expect(
       await screen.findByRole('heading', { name: 'mew' })
     ).toBeInTheDocument();
-    expect(fetchOnePokemon).toHaveBeenCalledWith('mew');
+    expect(countFetchCalls((url) => url.includes('/pokemon/mew'))).toBeGreaterThan(
+      0
+    );
 
     await user.click(screen.getByRole('heading', { name: /result area/i }));
     await waitFor(() => {
@@ -252,10 +308,12 @@ describe('App', () => {
   });
 
   it('switches details to another item while keeping the panel open', async () => {
-    fetchFirstPagePokemon.mockResolvedValue([
+    testListItems.length = 0;
+    testListItems.push(
       { name: 'mew', stats: ['hp - 100'] },
-      { name: 'eevee', stats: ['hp - 55'] },
-    ]);
+      { name: 'eevee', stats: ['hp - 55'] }
+    );
+    installFetchMock();
 
     const { user } = renderApp();
     await screen.findByText(/mew/i);
@@ -269,15 +327,20 @@ describe('App', () => {
       await screen.findByRole('heading', { name: 'eevee', level: 3 })
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
-    expect(fetchOnePokemon).toHaveBeenCalledWith('eevee');
+    expect(countFetchCalls((url) => url.includes('/pokemon/eevee'))).toBeGreaterThan(
+      0
+    );
   });
 
   it('shows the page from the URL query param', async () => {
-    const manyResults = Array.from({ length: 11 }, (_, index) => ({
-      name: `pokemon-${index + 1}`,
-      stats: ['hp - 1'],
-    }));
-    fetchFirstPagePokemon.mockResolvedValue(manyResults);
+    testListItems.length = 0;
+    testListItems.push(
+      ...Array.from({ length: 11 }, (_, index) => ({
+        name: `pokemon-${index + 1}`,
+        stats: ['hp - 1'],
+      }))
+    );
+    installFetchMock();
 
     renderApp(['/?page=2']);
 

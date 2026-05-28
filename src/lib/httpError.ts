@@ -26,6 +26,14 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof HttpError) {
     return error.message;
   }
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'data' in error &&
+    typeof (error as { data: unknown }).data === 'string'
+  ) {
+    return (error as { data: string }).data;
+  }
   if (error instanceof Error) {
     return 'Network error. Please check your connection and try again.';
   }
