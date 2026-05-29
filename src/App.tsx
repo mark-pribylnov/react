@@ -10,6 +10,7 @@ import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary
 import MasterDetailLayout from './components/MasterDetailLayout/MasterDetailLayout';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
+import { usePokemonListQuery } from './hooks/usePokemonListQuery';
 import { useSearchTermStorage } from './hooks/useSearchTermStorage';
 import {
   buildListSearchParams,
@@ -18,7 +19,7 @@ import {
 } from './lib/searchParams';
 import {
   normalizeSearchQuery,
-  runSearch,
+  setLastExecutedSearch,
   setSearchQuery,
   setShouldSimulateCrash,
   useAppDispatch,
@@ -29,14 +30,10 @@ import './App.css';
 
 function AppContent() {
   const dispatch = useAppDispatch();
-  const {
-    searchQuery,
-    results,
-    lastExecutedSearch,
-    isLoading,
-    errorMessage,
-    shouldSimulateCrash,
-  } = useAppSelector((state) => state.search);
+  const { searchQuery, lastExecutedSearch, shouldSimulateCrash } =
+    useAppSelector((state) => state.search);
+  const { results, isLoading, errorMessage } =
+    usePokemonListQuery(lastExecutedSearch);
 
   const { readSearchTerm, persistSearchTerm } = useSearchTermStorage();
   const navigate = useNavigate();
@@ -107,7 +104,7 @@ function AppContent() {
   useEffect(() => {
     const term = readSearchTerm().trim();
     dispatch(setSearchQuery(term));
-    void dispatch(runSearch(term));
+    dispatch(setLastExecutedSearch(term));
   }, [dispatch, readSearchTerm]);
 
   const onQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -118,9 +115,7 @@ function AppContent() {
     dispatch(setShouldSimulateCrash(true));
   };
 
-  const onSubmit = async (
-    event: SubmitEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const onSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const term = searchQuery.trim();
     if (term === lastExecutedSearch) {
@@ -132,7 +127,7 @@ function AppContent() {
 
     persistSearchTerm(term);
     navigateWithListParams({ page: 1, detailsIndex: null, openDetails: false });
-    await dispatch(runSearch(term));
+    dispatch(setLastExecutedSearch(term));
   };
 
   const handleListPanelClick = (): void => {

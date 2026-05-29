@@ -10,8 +10,8 @@ export {
 } from './pokemonApi';
 export {
   normalizeSearchQuery,
-  runSearch,
   searchReducer,
+  setLastExecutedSearch,
   setSearchQuery,
   setShouldSimulateCrash,
 } from './searchSlice';

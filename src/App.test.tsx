@@ -144,6 +144,77 @@ afterEach(() => {
 });
 
 describe('App', () => {
+  it('shows a loading indicator while list data is being fetched', async () => {
+    mockFetch.mockImplementation(async (input) => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const url = getFetchRequestUrl(input);
+
+      if (url.includes('search=')) {
+        const searchTerm = new URL(url).searchParams.get('search');
+        if (searchErrorTerm.current && searchTerm === searchErrorTerm.current) {
+          return createMockFetchResponse({}, { ok: false, status: 500, statusText: 'err' });
+        }
+
+        return createMockFetchResponse({
+          results: searchListItems.map((item) => ({ name: item.name })),
+        });
+      }
+
+      if (url.includes('?limit=')) {
+        return createMockFetchResponse({
+          results: testListItems.map((item) => ({ name: item.name })),
+        });
+      }
+
+      const slug = url.match(/\/pokemon\/([^/?]+)/)?.[1] ?? 'mew';
+      return createMockFetchResponse(createPokemonDetail(decodeURIComponent(slug)));
+    });
+
+    renderApp();
+    expect(screen.getByRole('status')).toHaveTextContent(/loading results/i);
+    expect(await screen.findByText(/mew/i)).toBeInTheDocument();
+  });
+
+  it('reuses cached list data when navigating away and back', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    const limitCalls = countFetchCalls((url) => url.includes('?limit=32'));
+
+    await user.click(screen.getByRole('link', { name: /about/i }));
+    await screen.findByRole('heading', { name: /about/i });
+
+    await user.click(screen.getByRole('link', { name: /search/i }));
+    await screen.findByText(/mew/i);
+
+    expect(countFetchCalls((url) => url.includes('?limit=32'))).toBe(limitCalls);
+  });
+
+  it('reuses cached detail data when reopening the same item', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    await user.click(screen.getByText(/1\) mew/i));
+    expect(
+      await screen.findByRole('heading', { name: 'mew', level: 3 })
+    ).toBeInTheDocument();
+
+    const detailCalls = countFetchCalls((url) => url.includes('/pokemon/mew'));
+
+    await user.click(screen.getByRole('heading', { name: /result area/i }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('button', { name: /close/i })
+      ).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText(/1\) mew/i));
+    expect(
+      await screen.findByRole('heading', { name: 'mew', level: 3 })
+    ).toBeInTheDocument();
+    expect(countFetchCalls((url) => url.includes('/pokemon/mew'))).toBe(
+      detailCalls
+    );
+  });
+
   it('loads results on mount using mocked API', async () => {
     renderApp();
     expect(await screen.findByText(/mew/i)).toBeInTheDocument();

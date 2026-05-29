@@ -1,13 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router';
-import { delay } from '../../lib/delay';
 import { getErrorMessage } from '../../lib/httpError';
 import { readDetailsIndexFromSearchParams } from '../../lib/searchParams';
 import { useGetPokemonByNameQuery } from '../../store';
 import type { HomeOutletContext } from '../../types/homeOutletContext';
 import './ItemDetailsPanel.scss';
-
-const DETAILS_LOADING_DELAY_MS = 200;
 
 type PokemonDetailsBodyProps = {
   pokemonName: string;
@@ -16,28 +12,11 @@ type PokemonDetailsBodyProps = {
 function PokemonDetailsBody({ pokemonName }: PokemonDetailsBodyProps) {
   const {
     data: pokemon,
-    isFetching,
+    isLoading,
     isError,
     error,
   } = useGetPokemonByNameQuery(pokemonName);
 
-  const [showLoading, setShowLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void delay(DETAILS_LOADING_DELAY_MS).then(() => {
-      if (!cancelled) {
-        setShowLoading(false);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const isLoading = isFetching || showLoading;
   const errorMessage = isError
     ? getErrorMessage(error)
     : !isLoading && !pokemon
