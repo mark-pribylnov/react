@@ -18,6 +18,7 @@ import {
   readPageFromSearchParams,
 } from './lib/searchParams';
 import {
+  invalidateAllPokemonCache,
   normalizeSearchQuery,
   setLastExecutedSearch,
   setSearchQuery,
@@ -115,6 +116,10 @@ function AppContent() {
     dispatch(setShouldSimulateCrash(true));
   };
 
+  const handleRefresh = (): void => {
+    invalidateAllPokemonCache(dispatch);
+  };
+
   const onSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const term = searchQuery.trim();
@@ -146,6 +151,7 @@ function AppContent() {
         searchQuery={searchQuery}
         onQueryChange={onQueryChange}
         onSubmit={onSubmit}
+        onRefresh={handleRefresh}
         onSimulateError={simulateAppError}
       />
       <MasterDetailLayout

@@ -24,8 +24,16 @@ section {
   border: 1px solid var(--app-border-color);
 }
 
-.simulate-error-button {
+.search-section__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.refresh-button,
+.simulate-error-button {
+  margin-bottom: 0;
 }
 
 .results-section {

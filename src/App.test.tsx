@@ -289,6 +289,39 @@ describe('App', () => {
     ).toHaveTextContent('Server error. Please try again in a moment.');
   });
 
+  it('refetches list data when refresh is clicked', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    const limitCalls = countFetchCalls((url) => url.includes('?limit=32'));
+
+    await user.click(screen.getByRole('button', { name: /^refresh$/i }));
+
+    await waitFor(() => {
+      expect(countFetchCalls((url) => url.includes('?limit=32'))).toBeGreaterThan(
+        limitCalls
+      );
+    });
+  });
+
+  it('refetches open detail data when refresh is clicked', async () => {
+    const { user } = renderApp();
+    await screen.findByText(/mew/i);
+    await user.click(screen.getByText(/1\) mew/i));
+    expect(
+      await screen.findByRole('heading', { name: 'mew', level: 3 })
+    ).toBeInTheDocument();
+
+    const detailCalls = countFetchCalls((url) => url.includes('/pokemon/mew'));
+
+    await user.click(screen.getByRole('button', { name: /^refresh$/i }));
+
+    await waitFor(() => {
+      expect(countFetchCalls((url) => url.includes('/pokemon/mew'))).toBeGreaterThan(
+        detailCalls
+      );
+    });
+  });
+
   it('stores checkbox selections in Redux and keeps them across route navigation', async () => {
     const { user } = renderApp();
     await screen.findByText(/mew/i);
