@@ -271,6 +271,24 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows an error message when the initial list request fails', async () => {
+    mockFetch.mockImplementation(async (input) => {
+      const url = getFetchRequestUrl(input);
+
+      if (url.includes('?limit=')) {
+        return createMockFetchResponse({}, { ok: false, status: 500, statusText: 'err' });
+      }
+
+      return createMockFetchResponse(createPokemonDetail('mew'));
+    });
+
+    renderApp();
+
+    expect(
+      await screen.findByRole('alert')
+    ).toHaveTextContent('Server error. Please try again in a moment.');
+  });
+
   it('stores checkbox selections in Redux and keeps them across route navigation', async () => {
     const { user } = renderApp();
     await screen.findByText(/mew/i);

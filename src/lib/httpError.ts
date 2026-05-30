@@ -22,20 +22,40 @@ export function getHttpErrorMessage(status: number): string {
   return 'Could not load data. Please try again.';
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof HttpError) {
     return error.message;
   }
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'data' in error &&
-    typeof (error as { data: unknown }).data === 'string'
-  ) {
-    return (error as { data: string }).data;
+
+  if (isRecord(error)) {
+    if (typeof error.data === 'string' && error.data.length > 0) {
+      return error.data;
+    }
+
+    if (error.status === 'FETCH_ERROR') {
+      return 'Network error. Please check your connection and try again.';
+    }
+
+    if (error.status === 'TIMEOUT_ERROR') {
+      return 'The request timed out. Please try again.';
+    }
+
+    if (typeof error.error === 'string' && error.error.length > 0) {
+      return error.error;
+    }
+
+    if (typeof error.message === 'string' && error.message.length > 0) {
+      return error.message;
+    }
   }
+
   if (error instanceof Error) {
-    return 'Network error. Please check your connection and try again.';
+    return error.message || 'Network error. Please check your connection and try again.';
   }
+
   return 'Could not load data. Please try again.';
 }
