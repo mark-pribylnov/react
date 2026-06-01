@@ -27,8 +27,44 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(err)).toBe('custom');
   });
 
-  it('returns network message for generic Error', () => {
-    expect(getErrorMessage(new Error('fail'))).toContain('Network error');
+  it('returns RTK Query HTTP error data message', () => {
+    expect(
+      getErrorMessage({
+        status: 500,
+        data: 'Server error. Please try again in a moment.',
+      })
+    ).toBe('Server error. Please try again in a moment.');
+  });
+
+  it('returns RTK Query custom error message', () => {
+    expect(
+      getErrorMessage({
+        status: 'CUSTOM_ERROR',
+        error: 'Request error. Please check your search and try again.',
+      })
+    ).toBe('Request error. Please check your search and try again.');
+  });
+
+  it('returns network message for fetch errors', () => {
+    expect(
+      getErrorMessage({
+        status: 'FETCH_ERROR',
+        error: 'Failed to fetch',
+      })
+    ).toContain('Network error');
+  });
+
+  it('returns timeout message for timeout errors', () => {
+    expect(
+      getErrorMessage({
+        status: 'TIMEOUT_ERROR',
+        error: 'Aborted',
+      })
+    ).toContain('timed out');
+  });
+
+  it('returns Error message when present', () => {
+    expect(getErrorMessage(new Error('Something broke'))).toBe('Something broke');
   });
 
   it('returns generic message for unknown values', () => {

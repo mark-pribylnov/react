@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   type ChangeEvent,
   type SubmitEvent,
 } from 'react';
@@ -11,16 +10,17 @@ import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary
 import MasterDetailLayout from './components/MasterDetailLayout/MasterDetailLayout';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
+import { usePokemonListQuery } from './hooks/usePokemonListQuery';
 import { useSearchTermStorage } from './hooks/useSearchTermStorage';
 import {
   buildListSearchParams,
   readDetailsIndexFromSearchParams,
   readPageFromSearchParams,
 } from './lib/searchParams';
-import { PokemonApi } from './services/pokemonApi';
 import {
+  invalidateAllPokemonCache,
   normalizeSearchQuery,
-  runSearch,
+  setLastExecutedSearch,
   setSearchQuery,
   setShouldSimulateCrash,
   useAppDispatch,
@@ -31,19 +31,10 @@ import './App.css';
 
 function AppContent() {
   const dispatch = useAppDispatch();
-  const {
-    searchQuery,
-    results,
-    lastExecutedSearch,
-    isLoading,
-    errorMessage,
-    shouldSimulateCrash,
-  } = useAppSelector((state) => state.search);
-
-  const pokemonApiRef = useRef<PokemonApi | null>(null);
-  if (pokemonApiRef.current === null) {
-    pokemonApiRef.current = new PokemonApi();
-  }
+  const { searchQuery, lastExecutedSearch, shouldSimulateCrash } =
+    useAppSelector((state) => state.search);
+  const { results, isLoading, errorMessage } =
+    usePokemonListQuery(lastExecutedSearch);
 
   const { readSearchTerm, persistSearchTerm } = useSearchTermStorage();
   const navigate = useNavigate();
@@ -103,25 +94,18 @@ function AppContent() {
     });
   }, [currentPage, navigateWithListParams]);
 
-  const fetchPokemonDetails = useCallback(async (name: string) => {
-    const api = pokemonApiRef.current;
-    if (!api) return null;
-    return api.fetchOnePokemon(name);
-  }, []);
-
   const outletContext = useMemo<HomeOutletContext>(
     () => ({
       results,
-      fetchPokemonDetails,
       closeDetails: closeItemDetails,
     }),
-    [closeItemDetails, fetchPokemonDetails, results]
+    [closeItemDetails, results]
   );
 
   useEffect(() => {
     const term = readSearchTerm().trim();
     dispatch(setSearchQuery(term));
-    void dispatch(runSearch(term));
+    dispatch(setLastExecutedSearch(term));
   }, [dispatch, readSearchTerm]);
 
   const onQueryChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -132,9 +116,11 @@ function AppContent() {
     dispatch(setShouldSimulateCrash(true));
   };
 
-  const onSubmit = async (
-    event: SubmitEvent<HTMLFormElement>
-  ): Promise<void> => {
+  const handleRefresh = (): void => {
+    invalidateAllPokemonCache(dispatch);
+  };
+
+  const onSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const term = searchQuery.trim();
     if (term === lastExecutedSearch) {
@@ -146,7 +132,7 @@ function AppContent() {
 
     persistSearchTerm(term);
     navigateWithListParams({ page: 1, detailsIndex: null, openDetails: false });
-    await dispatch(runSearch(term));
+    dispatch(setLastExecutedSearch(term));
   };
 
   const handleListPanelClick = (): void => {
@@ -165,6 +151,7 @@ function AppContent() {
         searchQuery={searchQuery}
         onQueryChange={onQueryChange}
         onSubmit={onSubmit}
+        onRefresh={handleRefresh}
         onSimulateError={simulateAppError}
       />
       <MasterDetailLayout

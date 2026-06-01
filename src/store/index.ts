@@ -2,9 +2,16 @@ export { store, setupStore } from './store';
 export type { AppDispatch, AppStore, RootState } from './store';
 export { useAppDispatch, useAppSelector } from './hooks';
 export {
+  invalidateAllPokemonCache,
+  pokemonApi,
+  useGetPokemonByNameQuery,
+  useGetFirstPagePokemonQuery,
+  useGetPokemonSearchResultsQuery,
+} from './pokemonApi';
+export {
   normalizeSearchQuery,
-  runSearch,
   searchReducer,
+  setLastExecutedSearch,
   setSearchQuery,
   setShouldSimulateCrash,
 } from './searchSlice';
