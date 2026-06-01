@@ -23,7 +23,10 @@ describe('pokemonApi (RTK Query)', () => {
       name: 'ditto',
       stats: [{ base_stat: 48, stat: { name: 'hp' } }],
     };
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(createMockFetchResponse(payload));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(createMockFetchResponse(payload));
+    vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock);
 
     const store = setupStore();
     const result = await store.dispatch(
@@ -31,7 +34,7 @@ describe('pokemonApi (RTK Query)', () => {
     );
 
     expect(result.data).toEqual(mapPokemonResponse(payload));
-    expect(getFetchRequestUrl(globalThis.fetch.mock.calls[0][0])).toBe(
+    expect(getFetchRequestUrl(fetchMock.mock.calls[0][0])).toBe(
       'https://pokeapi.co/api/v2/pokemon/ditto'
     );
   });
@@ -88,24 +91,26 @@ describe('pokemonApi (RTK Query)', () => {
     );
   });
 
-  it('invalidates cached pokemon queries', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        createMockFetchResponse({
-          name: 'ditto',
-          stats: [{ base_stat: 48, stat: { name: 'hp' } }],
-        })
-      );
-    vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock);
+  describe('cache invalidation', () => {
+    it('invalidates cached pokemon queries and refetches', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(
+          createMockFetchResponse({
+            name: 'ditto',
+            stats: [{ base_stat: 48, stat: { name: 'hp' } }],
+          })
+        );
+      vi.spyOn(globalThis, 'fetch').mockImplementation(fetchMock);
 
-    const store = setupStore();
-    await store.dispatch(pokemonApi.endpoints.getPokemonByName.initiate('ditto'));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+      const store = setupStore();
+      await store.dispatch(pokemonApi.endpoints.getPokemonByName.initiate('ditto'));
+      expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    invalidateAllPokemonCache(store.dispatch);
-    await store.dispatch(pokemonApi.endpoints.getPokemonByName.initiate('ditto'));
+      invalidateAllPokemonCache(store.dispatch);
+      await store.dispatch(pokemonApi.endpoints.getPokemonByName.initiate('ditto'));
 
-    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+      expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+    });
   });
 });

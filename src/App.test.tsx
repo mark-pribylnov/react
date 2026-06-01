@@ -144,6 +144,7 @@ afterEach(() => {
 });
 
 describe('App', () => {
+  describe('RTK Query integration', () => {
   it('shows a loading indicator while list data is being fetched', async () => {
     mockFetch.mockImplementation(async (input) => {
       await new Promise((resolve) => setTimeout(resolve, 50));
@@ -320,6 +321,7 @@ describe('App', () => {
         detailCalls
       );
     });
+  });
   });
 
   it('stores checkbox selections in Redux and keeps them across route navigation', async () => {

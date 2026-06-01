@@ -5,6 +5,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from '@reduxjs/toolkit/query/react';
+import type { QueryReturnValue } from '@reduxjs/toolkit/query';
 import { getCacheTtlSeconds, getPokeApiBaseUrl } from '../lib/cacheConfig';
 import { getHttpErrorMessage } from '../lib/httpError';
 import { mapPokemonResponse } from '../lib/pokemonMappers';
@@ -45,8 +46,14 @@ const pokemonBaseQuery: BaseQueryFn<
   return result;
 };
 
+type PokemonEndpointBaseQuery = (
+  arg: string | FetchArgs
+) =>
+  | QueryReturnValue<unknown, FetchBaseQueryError>
+  | PromiseLike<QueryReturnValue<unknown, FetchBaseQueryError>>;
+
 async function fetchPokemonResult(
-  baseQuery: typeof pokemonBaseQuery,
+  baseQuery: PokemonEndpointBaseQuery,
   name: string
 ): Promise<PokemonResult | null> {
   const slug = name.trim().toLowerCase();
