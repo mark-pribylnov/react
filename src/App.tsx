@@ -1,12 +1,16 @@
 import { useCallback, useState } from 'react';
 import { Modal } from './components/Modal/Modal';
+import { SubmissionCard } from './components/SubmissionCard/SubmissionCard';
 import { HookForm } from './components/forms/HookForm/HookForm';
 import { UncontrolledForm } from './components/forms/UncontrolledForm/UncontrolledForm';
+import { useAppSelector } from './store/hooks';
+import { selectSubmissions } from './store/slices/formSubmissionsSlice';
 import './App.css';
 
 type ActiveModal = 'uncontrolled' | 'hook-form' | null;
 
 function App() {
+  const submissions = useAppSelector(selectSubmissions);
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const closeModal = useCallback(() => setActiveModal(null), []);
 
@@ -23,14 +27,22 @@ function App() {
         </button>
       </div>
 
-      <section className="submissions" aria-label="Submitted forms" />
+      <section aria-label="Submitted forms">
+        {submissions.length === 0 ? (
+          <p>No submissions yet.</p>
+        ) : (
+          submissions.map((submission) => (
+            <SubmissionCard key={submission.id} submission={submission} />
+          ))
+        )}
+      </section>
 
       <Modal
         isOpen={activeModal === 'uncontrolled'}
         onClose={closeModal}
         title="Uncontrolled Form"
       >
-        <UncontrolledForm />
+        <UncontrolledForm onSuccess={closeModal} />
       </Modal>
 
       <Modal
@@ -38,7 +50,7 @@ function App() {
         onClose={closeModal}
         title="React Hook Form"
       >
-        <HookForm />
+        <HookForm onSuccess={closeModal} />
       </Modal>
     </main>
   );
