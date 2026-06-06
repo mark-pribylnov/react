@@ -1,61 +1,88 @@
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { GENDER_OPTIONS } from '../../../constants/genderOptions';
 import { CountryAutocomplete } from '../../CountryAutocomplete/CountryAutocomplete';
+import { FormFieldError } from '../FormFieldError/FormFieldError';
 import { PasswordStrengthIndicator } from '../../PasswordStrengthIndicator/PasswordStrengthIndicator';
 import { selectCountries } from '../../../store/slices/countriesSlice';
 import { addSubmission } from '../../../store/slices/formSubmissionsSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { FormSubmissionData } from '../../../types/form';
-import { fileToBase64, validateImageFile } from '../../../utils/image';
+import { fileToBase64 } from '../../../utils/image';
+import {
+  createFormSchema,
+  mapZodFieldErrors,
+  type FormFieldErrors,
+  type FormFieldName,
+} from '../../../validation/formSchema';
 
 type UncontrolledFormProps = {
   onSuccess: () => void;
 };
 
-function parseBasicFormData(formData: FormData): Omit<FormSubmissionData, 'imageBase64'> {
+function parseFormValues(formData: FormData) {
   const name = formData.get('name');
   const age = formData.get('age');
   const email = formData.get('email');
   const gender = formData.get('gender');
   const country = formData.get('country');
+  const password = formData.get('password');
+  const confirmPassword = formData.get('confirmPassword');
+  const image = formData.get('image');
 
   return {
-    name: typeof name === 'string' ? name.trim() : '',
+    name: typeof name === 'string' ? name : '',
     age: typeof age === 'string' && age !== '' ? Number(age) : NaN,
-    email: typeof email === 'string' ? email.trim() : '',
+    email: typeof email === 'string' ? email : '',
     gender: typeof gender === 'string' ? gender : '',
     acceptTerms: formData.get('acceptTerms') === 'on',
-    country: typeof country === 'string' ? country.trim() : '',
+    password: typeof password === 'string' ? password : '',
+    confirmPassword: typeof confirmPassword === 'string' ? confirmPassword : '',
+    country: typeof country === 'string' ? country : '',
+    image: image instanceof File ? image : null,
   };
+}
+
+function getImageFile(image: File | FileList | null): File {
+  if (image instanceof File) {
+    return image;
+  }
+
+  if (image instanceof FileList && image.length > 0) {
+    return image[0];
+  }
+
+  throw new Error('Image is required');
 }
 
 export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
   const dispatch = useAppDispatch();
   const countries = useAppSelector(selectCountries);
+  const formSchema = useMemo(() => createFormSchema(countries), [countries]);
   const [password, setPassword] = useState('');
-  const [imageError, setImageError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FormFieldErrors>({});
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setImageError(null);
 
-    const formData = new FormData(event.currentTarget);
-    const imageFile = formData.get('image');
+    const parsedValues = parseFormValues(new FormData(event.currentTarget));
+    const validationResult = formSchema.safeParse(parsedValues);
 
-    if (!(imageFile instanceof File) || imageFile.size === 0) {
-      setImageError('Image is required');
+    if (!validationResult.success) {
+      setErrors(mapZodFieldErrors(validationResult.error));
       return;
     }
 
-    const validationError = validateImageFile(imageFile);
-    if (validationError) {
-      setImageError(validationError);
-      return;
-    }
+    setErrors({});
 
+    const imageFile = getImageFile(validationResult.data.image);
     const imageBase64 = await fileToBase64(imageFile);
     const data: FormSubmissionData = {
-      ...parseBasicFormData(formData),
+      name: validationResult.data.name,
+      age: validationResult.data.age,
+      email: validationResult.data.email,
+      gender: validationResult.data.gender,
+      acceptTerms: validationResult.data.acceptTerms,
+      country: validationResult.data.country,
       imageBase64,
     };
 
@@ -71,21 +98,26 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
     onSuccess();
   };
 
+  const fieldError = (fieldName: FormFieldName) => errors[fieldName];
+
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} noValidate>
       <div>
         <label htmlFor="uncontrolled-name">Name</label>
         <input id="uncontrolled-name" name="name" type="text" />
+        <FormFieldError message={fieldError('name')} />
       </div>
 
       <div>
         <label htmlFor="uncontrolled-age">Age</label>
         <input id="uncontrolled-age" name="age" type="number" min="0" />
+        <FormFieldError message={fieldError('age')} />
       </div>
 
       <div>
         <label htmlFor="uncontrolled-email">Email</label>
         <input id="uncontrolled-email" name="email" type="email" />
+        <FormFieldError message={fieldError('email')} />
       </div>
 
       <div>
@@ -100,6 +132,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
             </option>
           ))}
         </select>
+        <FormFieldError message={fieldError('gender')} />
       </div>
 
       <div>
@@ -110,7 +143,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
           type="file"
           accept="image/png,image/jpeg"
         />
-        {imageError && <p role="alert">{imageError}</p>}
+        <FormFieldError message={fieldError('image')} />
       </div>
 
       <div>
@@ -121,6 +154,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
           type="password"
           onChange={(event) => setPassword(event.target.value)}
         />
+        <FormFieldError message={fieldError('password')} />
         <PasswordStrengthIndicator password={password} />
       </div>
 
@@ -131,6 +165,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
           name="confirmPassword"
           type="password"
         />
+        <FormFieldError message={fieldError('confirmPassword')} />
       </div>
 
       <div>
@@ -141,6 +176,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
           name="country"
           countries={countries}
         />
+        <FormFieldError message={fieldError('country')} />
       </div>
 
       <div>
@@ -150,6 +186,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
           type="checkbox"
         />
         <label htmlFor="uncontrolled-accept-terms">Terms and Conditions</label>
+        <FormFieldError message={fieldError('acceptTerms')} />
       </div>
 
       <button type="submit">Submit</button>

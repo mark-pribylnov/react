@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMemo } from 'react';
+import { useForm, type Resolver } from 'react-hook-form';
 import { GENDER_OPTIONS } from '../../../constants/genderOptions';
 import { CountryAutocomplete } from '../../CountryAutocomplete/CountryAutocomplete';
+import { FormFieldError } from '../FormFieldError/FormFieldError';
 import { PasswordStrengthIndicator } from '../../PasswordStrengthIndicator/PasswordStrengthIndicator';
 import { selectCountries } from '../../../store/slices/countriesSlice';
 import { addSubmission } from '../../../store/slices/formSubmissionsSlice';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import type { FormSubmissionData } from '../../../types/form';
-import { fileToBase64, validateImageFile } from '../../../utils/image';
+import { fileToBase64 } from '../../../utils/image';
+import { createFormSchema } from '../../../validation/formSchema';
 
 type HookFormValues = {
   name: string;
@@ -40,25 +43,24 @@ const defaultValues: HookFormValues = {
 export function HookForm({ onSuccess }: HookFormProps) {
   const dispatch = useAppDispatch();
   const countries = useAppSelector(selectCountries);
-  const [imageError, setImageError] = useState<string | null>(null);
-  const { register, handleSubmit, reset, watch } = useForm<HookFormValues>({
+  const formSchema = useMemo(() => createFormSchema(countries), [countries]);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isValid },
+  } = useForm<HookFormValues>({
+    resolver: zodResolver(formSchema) as Resolver<HookFormValues>,
+    mode: 'onChange',
     defaultValues,
   });
 
   const password = watch('password');
 
   const onSubmit = async (values: HookFormValues) => {
-    setImageError(null);
-
     const imageFile = values.image[0];
     if (!imageFile) {
-      setImageError('Image is required');
-      return;
-    }
-
-    const validationError = validateImageFile(imageFile);
-    if (validationError) {
-      setImageError(validationError);
       return;
     }
 
@@ -85,10 +87,11 @@ export function HookForm({ onSuccess }: HookFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div>
         <label htmlFor="hook-form-name">Name</label>
         <input id="hook-form-name" type="text" {...register('name')} />
+        <FormFieldError message={errors.name?.message} />
       </div>
 
       <div>
@@ -99,11 +102,13 @@ export function HookForm({ onSuccess }: HookFormProps) {
           min="0"
           {...register('age', { valueAsNumber: true })}
         />
+        <FormFieldError message={errors.age?.message} />
       </div>
 
       <div>
         <label htmlFor="hook-form-email">Email</label>
         <input id="hook-form-email" type="email" {...register('email')} />
+        <FormFieldError message={errors.email?.message} />
       </div>
 
       <div>
@@ -118,6 +123,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
             </option>
           ))}
         </select>
+        <FormFieldError message={errors.gender?.message} />
       </div>
 
       <div>
@@ -128,7 +134,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
           accept="image/png,image/jpeg"
           {...register('image')}
         />
-        {imageError && <p role="alert">{imageError}</p>}
+        <FormFieldError message={errors.image?.message} />
       </div>
 
       <div>
@@ -138,6 +144,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
           type="password"
           {...register('password')}
         />
+        <FormFieldError message={errors.password?.message} />
         <PasswordStrengthIndicator password={password} />
       </div>
 
@@ -148,6 +155,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
           type="password"
           {...register('confirmPassword')}
         />
+        <FormFieldError message={errors.confirmPassword?.message} />
       </div>
 
       <div>
@@ -158,6 +166,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
           countries={countries}
           {...register('country')}
         />
+        <FormFieldError message={errors.country?.message} />
       </div>
 
       <div>
@@ -167,9 +176,12 @@ export function HookForm({ onSuccess }: HookFormProps) {
           {...register('acceptTerms')}
         />
         <label htmlFor="hook-form-accept-terms">Terms and Conditions</label>
+        <FormFieldError message={errors.acceptTerms?.message} />
       </div>
 
-      <button type="submit">Submit</button>
+      <button type="submit" disabled={!isValid}>
+        Submit
+      </button>
     </form>
   );
 }
