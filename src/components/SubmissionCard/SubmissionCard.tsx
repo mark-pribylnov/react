@@ -1,7 +1,9 @@
 import type { FormSubmission } from '../../types/form';
+import './SubmissionCard.css';
 
 type SubmissionCardProps = {
   submission: FormSubmission;
+  isHighlighted?: boolean;
 };
 
 const sourceLabels = {
@@ -9,11 +11,16 @@ const sourceLabels = {
   'hook-form': 'React Hook Form',
 } as const;
 
-export function SubmissionCard({ submission }: SubmissionCardProps) {
+export function SubmissionCard({
+  submission,
+  isHighlighted = false,
+}: SubmissionCardProps) {
   const { data, source, submittedAt } = submission;
 
   return (
-    <article>
+    <article
+      className={isHighlighted ? 'submission-card--highlighted' : undefined}
+    >
       <h3>{sourceLabels[source]}</h3>
       <p>Submitted: {new Date(submittedAt).toLocaleString()}</p>
       <dl>

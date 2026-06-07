@@ -25,7 +25,7 @@ type HookFormValues = {
 };
 
 type HookFormProps = {
-  onSuccess: () => void;
+  onSuccess: (submissionId: string) => void;
 };
 
 const defaultValues: HookFormValues = {
@@ -75,7 +75,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
       imageBase64,
     };
 
-    dispatch(
+    const action = dispatch(
       addSubmission({
         source: 'hook-form',
         data,
@@ -83,7 +83,7 @@ export function HookForm({ onSuccess }: HookFormProps) {
     );
 
     reset(defaultValues);
-    onSuccess();
+    onSuccess(action.payload.id);
   };
 
   return (

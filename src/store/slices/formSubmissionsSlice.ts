@@ -18,13 +18,18 @@ const formSubmissionsSlice = createSlice({
   name: 'formSubmissions',
   initialState,
   reducers: {
-    addSubmission: (state, action: PayloadAction<AddSubmissionPayload>) => {
-      state.items.push({
-        id: crypto.randomUUID(),
-        submittedAt: Date.now(),
-        source: action.payload.source,
-        data: action.payload.data,
-      });
+    addSubmission: {
+      reducer: (state, action: PayloadAction<FormSubmission>) => {
+        state.items.push(action.payload);
+      },
+      prepare: (payload: AddSubmissionPayload) => ({
+        payload: {
+          id: crypto.randomUUID(),
+          submittedAt: Date.now(),
+          source: payload.source,
+          data: payload.data,
+        },
+      }),
     },
   },
 });

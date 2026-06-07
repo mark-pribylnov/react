@@ -16,7 +16,7 @@ import {
 } from '../../../validation/formSchema';
 
 type UncontrolledFormProps = {
-  onSuccess: () => void;
+  onSuccess: (submissionId: string) => void;
 };
 
 function parseFormValues(formData: FormData) {
@@ -86,7 +86,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
       imageBase64,
     };
 
-    dispatch(
+    const action = dispatch(
       addSubmission({
         source: 'uncontrolled',
         data,
@@ -95,7 +95,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
 
     setPassword('');
     event.currentTarget.reset();
-    onSuccess();
+    onSuccess(action.payload.id);
   };
 
   const fieldError = (fieldName: FormFieldName) => errors[fieldName];

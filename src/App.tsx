@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Modal } from './components/Modal/Modal';
 import { SubmissionCard } from './components/SubmissionCard/SubmissionCard';
 import { HookForm } from './components/forms/HookForm/HookForm';
@@ -12,7 +12,28 @@ type ActiveModal = 'uncontrolled' | 'hook-form' | null;
 function App() {
   const submissions = useAppSelector(selectSubmissions);
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [highlightedSubmissionId, setHighlightedSubmissionId] = useState<
+    string | null
+  >(null);
+
   const closeModal = useCallback(() => setActiveModal(null), []);
+
+  const handleSubmissionSuccess = useCallback((submissionId: string) => {
+    setActiveModal(null);
+    setHighlightedSubmissionId(submissionId);
+  }, []);
+
+  useEffect(() => {
+    if (!highlightedSubmissionId) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setHighlightedSubmissionId(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [highlightedSubmissionId]);
 
   return (
     <main className="app">
@@ -32,7 +53,11 @@ function App() {
           <p>No submissions yet.</p>
         ) : (
           submissions.map((submission) => (
-            <SubmissionCard key={submission.id} submission={submission} />
+            <SubmissionCard
+              key={submission.id}
+              submission={submission}
+              isHighlighted={submission.id === highlightedSubmissionId}
+            />
           ))
         )}
       </section>
@@ -42,7 +67,7 @@ function App() {
         onClose={closeModal}
         title="Uncontrolled Form"
       >
-        <UncontrolledForm onSuccess={closeModal} />
+        <UncontrolledForm onSuccess={handleSubmissionSuccess} />
       </Modal>
 
       <Modal
@@ -50,7 +75,7 @@ function App() {
         onClose={closeModal}
         title="React Hook Form"
       >
-        <HookForm onSuccess={closeModal} />
+        <HookForm onSuccess={handleSubmissionSuccess} />
       </Modal>
     </main>
   );
