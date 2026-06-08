@@ -19,7 +19,24 @@ type UncontrolledFormProps = {
   onSuccess: (submissionId: string) => void;
 };
 
-function parseFormValues(formData: FormData) {
+function getImageFromForm(form: HTMLFormElement) {
+  const formDataImage = new FormData(form).get('image');
+
+  if (formDataImage instanceof File && formDataImage.size > 0) {
+    return formDataImage;
+  }
+
+  const imageInput = form.elements.namedItem('image');
+
+  if (imageInput instanceof HTMLInputElement && imageInput.files?.[0]) {
+    return imageInput.files[0];
+  }
+
+  return null;
+}
+
+function parseFormValues(form: HTMLFormElement) {
+  const formData = new FormData(form);
   const name = formData.get('name');
   const age = formData.get('age');
   const email = formData.get('email');
@@ -27,7 +44,7 @@ function parseFormValues(formData: FormData) {
   const country = formData.get('country');
   const password = formData.get('password');
   const confirmPassword = formData.get('confirmPassword');
-  const image = formData.get('image');
+  const image = getImageFromForm(form);
 
   return {
     name: typeof name === 'string' ? name : '',
@@ -38,7 +55,7 @@ function parseFormValues(formData: FormData) {
     password: typeof password === 'string' ? password : '',
     confirmPassword: typeof confirmPassword === 'string' ? confirmPassword : '',
     country: typeof country === 'string' ? country : '',
-    image: image instanceof File ? image : null,
+    image,
   };
 }
 
@@ -63,8 +80,9 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = event.currentTarget;
 
-    const parsedValues = parseFormValues(new FormData(event.currentTarget));
+    const parsedValues = parseFormValues(form);
     const validationResult = formSchema.safeParse(parsedValues);
 
     if (!validationResult.success) {
@@ -94,7 +112,7 @@ export function UncontrolledForm({ onSuccess }: UncontrolledFormProps) {
     );
 
     setPassword('');
-    event.currentTarget.reset();
+    form.reset();
     onSuccess(action.payload.id);
   };
 

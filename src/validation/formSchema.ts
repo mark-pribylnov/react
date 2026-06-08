@@ -77,7 +77,19 @@ export function createFormSchema(countries: readonly string[]) {
         .trim()
         .min(1, 'Country is required')
         .refine((value) => countries.includes(value), 'Country must be selected from the list'),
-      image: z.union([z.instanceof(File), z.instanceof(FileList), z.null()]),
+      image: z.union([
+        z.instanceof(File),
+        z.custom<FileList>(
+          (value) =>
+            value instanceof FileList ||
+            (typeof value === 'object' &&
+              value !== null &&
+              'length' in value &&
+              typeof (value as FileList).item === 'function'),
+          'Invalid image'
+        ),
+        z.null(),
+      ]),
     })
     .superRefine((data, context) => {
       if (data.password !== data.confirmPassword) {
