@@ -1,0 +1,16 @@
+export const COUNTRIES = [
+  'Australia',
+  'Brazil',
+  'Canada',
+  'France',
+  'Germany',
+  'India',
+  'Italy',
+  'Japan',
+  'Mexico',
+  'Poland',
+  'Spain',
+  'Ukraine',
+  'United Kingdom',
+  'United States',
+] as const;
