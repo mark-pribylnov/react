@@ -1,0 +1,12 @@
+.countryList {
+  padding: 16px;
+}
+
+.row {
+  box-sizing: border-box;
+  padding-bottom: 16px;
+}
+
+.cardWrapper > div {
+  margin-bottom: 0;
+}
