@@ -1,4 +1,6 @@
-import { useOutletContext, useSearchParams } from 'react-router';
+'use client';
+
+import { useSearchParams } from 'next/navigation';
 import { getErrorMessage } from '../../lib/httpError';
 import { readDetailsIndexFromSearchParams } from '../../lib/searchParams';
 import { useGetPokemonByNameQuery } from '../../store';
@@ -56,10 +58,19 @@ function PokemonDetailsBody({ pokemonName }: PokemonDetailsBodyProps) {
   );
 }
 
-export default function ItemDetailsPanel() {
-  const { results, closeDetails } = useOutletContext<HomeOutletContext>();
-  const [searchParams] = useSearchParams();
-  const detailsIndex = readDetailsIndexFromSearchParams(searchParams);
+type ItemDetailsPanelProps = {
+  results: HomeOutletContext['results'];
+  closeDetails: () => void;
+};
+
+export default function ItemDetailsPanel({
+  results,
+  closeDetails,
+}: ItemDetailsPanelProps) {
+  const searchParams = useSearchParams();
+  const detailsIndex = readDetailsIndexFromSearchParams(
+    searchParams ?? new URLSearchParams()
+  );
   const selectedListItem =
     detailsIndex != null ? results[detailsIndex - 1] : undefined;
 

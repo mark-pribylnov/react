@@ -1,3 +1,5 @@
+'use client';
+
 import type { Theme } from '../../context/themeContext.ts';
 import { useTheme } from '../../context/useTheme.ts';
 import './ThemeToggle.scss';

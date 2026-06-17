@@ -1,3 +1,5 @@
+'use client';
+
 import React, { type ErrorInfo } from 'react';
 
 type AppErrorBoundaryProps = {

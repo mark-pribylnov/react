@@ -1,3 +1,5 @@
+'use client';
+
 import {
   useCallback,
   useEffect,
@@ -5,8 +7,9 @@ import {
   type ChangeEvent,
   type SubmitEvent,
 } from 'react';
-import { useMatch, useNavigate, useSearchParams } from 'react-router';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
+import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
 import MasterDetailLayout from './components/MasterDetailLayout/MasterDetailLayout';
 import ResultsPanel from './components/ResultsPanel/ResultsPanel';
 import { SearchPanel } from './components/SearchPanel/SearchPanel';
@@ -37,11 +40,16 @@ function AppContent() {
     usePokemonListQuery(lastExecutedSearch);
 
   const { readSearchTerm, persistSearchTerm } = useSearchTermStorage();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isDetailsOpen = Boolean(useMatch({ path: '/details', end: true }));
-  const currentPage = readPageFromSearchParams(searchParams);
-  const selectedDetailsIndex = readDetailsIndexFromSearchParams(searchParams);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isDetailsOpen = pathname === '/details';
+  const currentPage = readPageFromSearchParams(
+    searchParams ?? new URLSearchParams()
+  );
+  const selectedDetailsIndex = readDetailsIndexFromSearchParams(
+    searchParams ?? new URLSearchParams()
+  );
 
   const navigateWithListParams = useCallback(
     (options: {
@@ -55,10 +63,10 @@ function AppContent() {
           ? (options.detailsIndex ?? null)
           : null,
       });
-      const pathname = options.openDetails ? '/details' : '/';
-      navigate({ pathname, search });
+      const nextPath = options.openDetails ? '/details' : '/';
+      router.push(`${nextPath}${search}`);
     },
-    [navigate]
+    [router]
   );
 
   const setCurrentPage = useCallback(
@@ -155,8 +163,16 @@ function AppContent() {
         onSimulateError={simulateAppError}
       />
       <MasterDetailLayout
+        isDetailsOpen={isDetailsOpen}
         onListPanelClick={handleListPanelClick}
-        outletContext={outletContext}
+        detailsPanel={
+          isDetailsOpen ? (
+            <ItemDetailsPanel
+              results={outletContext.results}
+              closeDetails={outletContext.closeDetails}
+            />
+          ) : null
+        }
       >
         <ResultsPanel
           currentPage={currentPage}

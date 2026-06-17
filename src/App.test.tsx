@@ -1,14 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { MemoryRouter, Route, Routes } from 'react-router';
-import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from './context/ThemeProvider.tsx';
-import AboutPage from './pages/AboutPage/AboutPage';
-import AppLayout from './layouts/AppLayout';
-import { setupStore } from './store/store';
-import { createMockFetchResponse, getFetchRequestUrl } from './test-utils/createMockFetchResponse';
+import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
+import {
+  createMockFetchResponse,
+  getFetchRequestUrl,
+} from './test-utils/createMockFetchResponse';
+import { renderTestApp } from './test-utils/renderTestApp';
 
 type TestListItem = { name: string; stats?: string[] };
 
@@ -86,11 +83,6 @@ vi.mock('./lib/downloadSelectedItemsCsv', () => ({
   downloadSelectedItemsCsv,
 }));
 
-import App from './App';
-import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
-
-const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
-
 function resetFetchFixtures() {
   testListItems.length = 0;
   testListItems.push(...fixtures);
@@ -107,30 +99,10 @@ function countFetchCalls(matcher: (url: string) => boolean): number {
 }
 
 function renderApp(initialEntries: string[] = ['/']) {
-  const store = setupStore();
-  const user = userEvent.setup();
-
-  return {
-    user,
-    store,
-    ...render(
-      <Provider store={store}>
-        <ThemeProvider>
-          <MemoryRouter initialEntries={initialEntries}>
-            <Routes>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<App />}>
-                  <Route path="details" element={<ItemDetailsPanel />} />
-                </Route>
-                <Route path="/about" element={<AboutPage />} />
-              </Route>
-            </Routes>
-          </MemoryRouter>
-        </ThemeProvider>
-      </Provider>
-    ),
-  };
+  return renderTestApp(initialEntries);
 }
+
+const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
 
 beforeEach(() => {
   vi.mocked(getLastSearch).mockReturnValue('');

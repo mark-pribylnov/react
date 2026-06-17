@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import Link from 'next/link';
 import '../../App.css';
 import './NotFoundPage.scss';
 
@@ -11,7 +11,7 @@ export default function NotFoundPage() {
         <p className="not-found-page__message">
           The page you are looking for does not exist
         </p>
-        <Link to="/" className="not-found-page__link">
+        <Link href="/" className="not-found-page__link">
           Back to main app
         </Link>
       </section>

@@ -1,13 +1,12 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createMockFetchResponse,
   getFetchRequestUrl,
 } from '../../test-utils/createMockFetchResponse';
+import { navigationMock } from '../../test-utils/navigationMock';
 import { setupStore } from '../../store/store';
-import type { HomeOutletContext } from '../../types/homeOutletContext';
 import ItemDetailsPanel from './ItemDetailsPanel';
 
 const mockFetch = vi.fn();
@@ -38,23 +37,17 @@ function installFetchMock() {
 
 function renderItemDetails(store = setupStore()) {
   const closeDetails = vi.fn();
-  const outletContext: HomeOutletContext = {
-    results: [{ name: 'mew', stats: ['hp - 100'] }],
-    closeDetails,
-  };
+  navigationMock.setInitialEntry('/?details=1');
 
   return {
     store,
     closeDetails,
     ...render(
       <Provider store={store}>
-        <MemoryRouter initialEntries={['/details?details=1']}>
-          <Routes>
-            <Route element={<Outlet context={outletContext} />}>
-              <Route path="/details" element={<ItemDetailsPanel />} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
+        <ItemDetailsPanel
+          results={[{ name: 'mew', stats: ['hp - 100'] }]}
+          closeDetails={closeDetails}
+        />
       </Provider>
     ),
   };
@@ -116,20 +109,14 @@ describe('ItemDetailsPanel (RTK Query)', () => {
       mockFetch.mockClear();
       cleanup();
 
-      const outletContext: HomeOutletContext = {
-        results: [{ name: 'mew', stats: ['hp - 100'] }],
-        closeDetails: vi.fn(),
-      };
+      navigationMock.setInitialEntry('/?details=1');
 
       render(
         <Provider store={store}>
-          <MemoryRouter initialEntries={['/details?details=1']}>
-            <Routes>
-              <Route element={<Outlet context={outletContext} />}>
-                <Route path="/details" element={<ItemDetailsPanel />} />
-              </Route>
-            </Routes>
-          </MemoryRouter>
+          <ItemDetailsPanel
+            results={[{ name: 'mew', stats: ['hp - 100'] }]}
+            closeDetails={vi.fn()}
+          />
         </Provider>
       );
 

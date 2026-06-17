@@ -1,21 +1,19 @@
 import type { ReactNode } from 'react';
-import { Outlet, useMatch } from 'react-router';
-import type { HomeOutletContext } from '../../types/homeOutletContext';
 import './MasterDetailLayout.scss';
 
 export type MasterDetailLayoutProps = {
   children: ReactNode;
+  detailsPanel: ReactNode;
+  isDetailsOpen: boolean;
   onListPanelClick: () => void;
-  outletContext: HomeOutletContext;
 };
 
 export default function MasterDetailLayout({
   children,
+  detailsPanel,
+  isDetailsOpen,
   onListPanelClick,
-  outletContext,
 }: MasterDetailLayoutProps) {
-  const isDetailsOpen = Boolean(useMatch({ path: '/details', end: true }));
-
   return (
     <div
       className={
@@ -30,9 +28,7 @@ export default function MasterDetailLayout({
         {children}
       </div>
       {isDetailsOpen ? (
-        <aside className="master-detail__details">
-          <Outlet context={outletContext} />
-        </aside>
+        <aside className="master-detail__details">{detailsPanel}</aside>
       ) : null}
     </div>
   );

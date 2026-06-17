@@ -1,16 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { aboutPageContent } from '../../content/aboutPageContent';
 import AboutPage from './AboutPage';
 
 describe('AboutPage', () => {
   it('shows author and course links', () => {
-    render(
-      <MemoryRouter>
-        <AboutPage />
-      </MemoryRouter>
-    );
+    render(<AboutPage />);
 
     expect(screen.getByRole('heading', { name: /about/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: aboutPageContent.authorName })).toHaveAttribute(

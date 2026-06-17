@@ -1,3 +1,5 @@
+'use client';
+
 import { downloadSelectedItemsCsv } from '../../lib/downloadSelectedItemsCsv';
 import {
   clearSelectedItems,
