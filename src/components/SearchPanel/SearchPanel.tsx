@@ -1,4 +1,7 @@
+'use client';
+
 import type { ChangeEvent, SubmitEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import './SearchPanel.css';
 
 export type SearchPanelProps = {
@@ -16,28 +19,30 @@ export function SearchPanel({
   onRefresh,
   onSimulateError,
 }: SearchPanelProps) {
+  const t = useTranslations('searchPanel');
+
   return (
     <section className="search-section">
       <div className="search-section__left-side">
-        <h2>Search area:</h2>
+        <h2>{t('heading')}</h2>
         <div className="search-section__actions">
           <button
             type="button"
             className="refresh-button"
             onClick={onRefresh}
           >
-            Refresh
+            {t('refresh')}
           </button>
           <button
             type="button"
             className="simulate-error-button"
             onClick={onSimulateError}
           >
-            Test Error Boundary
+            {t('testError')}
           </button>
         </div>
         <form action="#" onSubmit={onSubmit}>
-          <label htmlFor="search-terms-input">Search terms</label>
+          <label htmlFor="search-terms-input">{t('searchTerms')}</label>
           <input
             id="search-terms-input"
             type="text"
@@ -46,7 +51,7 @@ export function SearchPanel({
             onChange={onQueryChange}
           />
           <button type="submit" className="search-button">
-            Search
+            {t('search')}
           </button>
         </form>
       </div>

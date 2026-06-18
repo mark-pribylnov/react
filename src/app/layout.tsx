@@ -1,21 +1,33 @@
 import type { Metadata } from 'next';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import '../index.css';
+import { defaultLocale, isAppLocale } from '../i18n/config';
 import { AppProviders } from './AppProviders';
 
-export const metadata: Metadata = {
-  title: 'rs-react-app',
-  description: 'RS School React course project',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('metadata');
 
-export default function RootLayout({
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const localeValue = await getLocale();
+  const locale = isAppLocale(localeValue) ? localeValue : defaultLocale;
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders locale={locale} messages={messages}>
+          {children}
+        </AppProviders>
       </body>
     </html>
   );

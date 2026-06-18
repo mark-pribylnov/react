@@ -1,6 +1,7 @@
 import { render, type RenderOptions, type RenderResult } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import type { ReactElement } from 'react';
+import { TestIntlProvider } from './TestIntlProvider';
 
 export function renderWithUser(
   ui: ReactElement,
@@ -9,6 +10,11 @@ export function renderWithUser(
   const user = userEvent.setup();
   return {
     user,
-    ...render(ui, options),
+    ...render(ui, {
+      wrapper: ({ children }) => (
+        <TestIntlProvider>{children}</TestIntlProvider>
+      ),
+      ...options,
+    }),
   };
 }

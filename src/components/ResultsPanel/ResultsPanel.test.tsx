@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import type { ReactElement } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { setupStore } from '../../store/store';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import ResultsPanel from './ResultsPanel';
 
 const noopSetPage = vi.fn();
@@ -21,7 +22,11 @@ function renderResultsPanel(
   const store = setupStore();
 
   return render(ui, {
-    wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
+    wrapper: ({ children }) => (
+      <TestIntlProvider>
+        <Provider store={store}>{children}</Provider>
+      </TestIntlProvider>
+    ),
     ...options,
   });
 }

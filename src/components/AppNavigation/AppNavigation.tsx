@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import './AppNavigation.scss';
 
 function getNavLinkClassName(isActive: boolean): string {
@@ -12,14 +13,15 @@ function getNavLinkClassName(isActive: boolean): string {
 
 export default function AppNavigation() {
   const pathname = usePathname();
+  const t = useTranslations('nav');
 
   return (
-    <nav className="app-navigation" aria-label="Main navigation">
+    <nav className="app-navigation" aria-label={t('ariaLabel')}>
       <Link href="/" className={getNavLinkClassName(pathname === '/')}>
-        Search
+        {t('search')}
       </Link>
       <Link href="/about" className={getNavLinkClassName(pathname === '/about')}>
-        About
+        {t('about')}
       </Link>
     </nav>
   );

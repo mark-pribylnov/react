@@ -6,6 +6,7 @@ import {
   getFetchRequestUrl,
 } from '../../test-utils/createMockFetchResponse';
 import { navigationMock } from '../../test-utils/navigationMock';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import { setupStore } from '../../store/store';
 import ItemDetailsPanel from './ItemDetailsPanel';
 
@@ -43,12 +44,14 @@ function renderItemDetails(store = setupStore()) {
     store,
     closeDetails,
     ...render(
-      <Provider store={store}>
-        <ItemDetailsPanel
-          results={[{ name: 'mew', stats: ['hp - 100'] }]}
-          closeDetails={closeDetails}
-        />
-      </Provider>
+      <TestIntlProvider>
+        <Provider store={store}>
+          <ItemDetailsPanel
+            results={[{ name: 'mew', stats: ['hp - 100'] }]}
+            closeDetails={closeDetails}
+          />
+        </Provider>
+      </TestIntlProvider>
     ),
   };
 }
@@ -112,12 +115,14 @@ describe('ItemDetailsPanel (RTK Query)', () => {
       navigationMock.setInitialEntry('/?details=1');
 
       render(
-        <Provider store={store}>
-          <ItemDetailsPanel
-            results={[{ name: 'mew', stats: ['hp - 100'] }]}
-            closeDetails={vi.fn()}
-          />
-        </Provider>
+        <TestIntlProvider>
+          <Provider store={store}>
+            <ItemDetailsPanel
+              results={[{ name: 'mew', stats: ['hp - 100'] }]}
+              closeDetails={vi.fn()}
+            />
+          </Provider>
+        </TestIntlProvider>
       );
 
       expect(

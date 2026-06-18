@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithUser } from '../../test-utils';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import { AppErrorBoundary } from './AppErrorBoundary';
 
 class Boom extends React.Component<{ shouldThrow: boolean }> {
@@ -31,12 +32,20 @@ describe('AppErrorBoundary', () => {
   });
 
   it('renders children when there is no error', () => {
-    render(<Harness bad={false} />);
+    render(
+      <TestIntlProvider>
+        <Harness bad={false} />
+      </TestIntlProvider>
+    );
     expect(screen.getByText('child ok')).toBeInTheDocument();
   });
 
   it('renders fallback UI when a child throws', () => {
-    render(<Harness bad />);
+    render(
+      <TestIntlProvider>
+        <Harness bad />
+      </TestIntlProvider>
+    );
     expect(
       screen.getByRole('heading', { name: /something went wrong/i })
     ).toBeInTheDocument();

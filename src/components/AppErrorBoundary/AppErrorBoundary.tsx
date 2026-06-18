@@ -1,6 +1,7 @@
 'use client';
 
 import React, { type ErrorInfo } from 'react';
+import { ErrorBoundaryFallback } from './ErrorBoundaryFallback';
 
 type AppErrorBoundaryProps = {
   children: React.ReactNode;
@@ -32,20 +33,7 @@ export class AppErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="app-container">
-          <section className="error-boundary-fallback">
-            <h2>Something went wrong</h2>
-            <p>
-              The app hit an unexpected error. You can try resetting it and
-              continue using the app.
-            </p>
-            <button className="search-button" type="button" onClick={this.resetBoundary}>
-              Reset application
-            </button>
-          </section>
-        </div>
-      );
+      return <ErrorBoundaryFallback onReset={this.resetBoundary} />;
     }
 
     return this.props.children;

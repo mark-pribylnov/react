@@ -1,9 +1,11 @@
 import type { PokemonResult } from '../../types/pokemon';
 import PageSwitcher from '../PageSwitcher/PageSwitcher';
 import type { ChangeEvent, Dispatch, MouseEvent, SetStateAction } from 'react';
+import { useTranslations } from 'next-intl';
 import './ResultsPanel.scss';
 import type { PageDirection } from '../../types/otherTypes';
 import { getPokemonItemKey } from '../../lib/pokemonItemKey';
+import { useLocalizedErrorMessage } from '../../hooks/useLocalizedErrorMessage';
 import { toggleSelectedItem, useAppDispatch, useAppSelector } from '../../store';
 
 export type ResultsPanelProps = {
@@ -28,6 +30,8 @@ export default function ResultsPanel({
   selectedDetailsIndex = null,
   onSelectItem,
 }: ResultsPanelProps) {
+  const t = useTranslations('resultsPanel');
+  const localizedErrorMessage = useLocalizedErrorMessage(errorMessage);
   const dispatch = useAppDispatch();
   const selectedItems = useAppSelector((state) => state.selectedItems.items);
   const selectedKeys = new Set(
@@ -76,7 +80,7 @@ export default function ResultsPanel({
   return (
     <section className="results-section">
       <header className="section-header">
-        <h2>Result area:</h2>
+        <h2>{t('heading')}</h2>
         {showPagination ? (
           <PageSwitcher
             currentPage={currentPage}
@@ -90,10 +94,10 @@ export default function ResultsPanel({
         <thead>
           <tr>
             <th scope="col" className="results-table__select-col">
-              Select
+              {t('select')}
             </th>
-            <th scope="col">Pokemon Name</th>
-            <th scope="col">Pokemon Stats</th>
+            <th scope="col">{t('pokemonName')}</th>
+            <th scope="col">{t('pokemonStats')}</th>
           </tr>
         </thead>
         <tbody>
@@ -102,19 +106,19 @@ export default function ResultsPanel({
               <td colSpan={columnCount}>
                 <div className="loading-indicator" role="status">
                   <span className="loading-spinner" />
-                  Loading results...
+                  {t('loading')}
                 </div>
               </td>
             </tr>
-          ) : errorMessage ? (
+          ) : localizedErrorMessage ? (
             <tr className="results-row-error">
               <td colSpan={columnCount} role="alert">
-                {errorMessage}
+                {localizedErrorMessage}
               </td>
             </tr>
           ) : results.length === 0 ? (
             <tr>
-              <td colSpan={columnCount}>Nothing to show yet</td>
+              <td colSpan={columnCount}>{t('empty')}</td>
             </tr>
           ) : (
             showedResults.map((result) => {
@@ -139,7 +143,7 @@ export default function ResultsPanel({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      aria-label={`Select ${result.name}`}
+                      aria-label={t('selectItem', { name: result.name })}
                       onChange={(event) =>
                         handleCheckboxChange(event, result, itemIndex)
                       }

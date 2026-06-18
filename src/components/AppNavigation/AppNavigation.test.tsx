@@ -1,13 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { navigationMock } from '../../test-utils/navigationMock';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import AppNavigation from './AppNavigation';
 
 describe('AppNavigation', () => {
   it('renders search and about links', () => {
     navigationMock.setInitialEntry('/');
 
-    render(<AppNavigation />);
+    render(
+      <TestIntlProvider>
+        <AppNavigation />
+      </TestIntlProvider>
+    );
 
     expect(screen.getByRole('link', { name: /search/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: /about/i })).toHaveAttribute(

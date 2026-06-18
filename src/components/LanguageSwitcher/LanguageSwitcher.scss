@@ -1,0 +1,11 @@
+.language-switcher {
+  display: flex;
+  gap: 8px;
+}
+
+.language-switcher__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}

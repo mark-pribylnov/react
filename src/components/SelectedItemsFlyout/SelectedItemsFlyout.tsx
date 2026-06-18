@@ -6,11 +6,13 @@ import {
   useAppDispatch,
   useAppSelector,
 } from '../../store';
+import { useTranslations } from 'next-intl';
 import './SelectedItemsFlyout.scss';
 
 export default function SelectedItemsFlyout() {
   const dispatch = useAppDispatch();
   const selectedItems = useAppSelector((state) => state.selectedItems.items);
+  const t = useTranslations('flyout');
 
   if (selectedItems.length === 0) {
     return null;
@@ -24,29 +26,32 @@ export default function SelectedItemsFlyout() {
     downloadSelectedItemsCsv(selectedItems);
   };
 
+  const countMessage =
+    selectedItems.length === 1
+      ? t('countOne', { count: selectedItems.length })
+      : t('countMany', { count: selectedItems.length });
+
   return (
     <aside
       className="selected-items-flyout"
       role="region"
-      aria-label="Selected items"
+      aria-label={t('ariaLabel')}
     >
-      <p className="selected-items-flyout__count">
-        {selectedItems.length} item{selectedItems.length === 1 ? '' : 's'} selected
-      </p>
+      <p className="selected-items-flyout__count">{countMessage}</p>
       <div className="selected-items-flyout__actions">
         <button
           type="button"
           className="selected-items-flyout__button"
           onClick={handleUnselectAll}
         >
-          Unselect all
+          {t('unselectAll')}
         </button>
         <button
           type="button"
           className="selected-items-flyout__button"
           onClick={handleDownload}
         >
-          Download
+          {t('download')}
         </button>
       </div>
     </aside>

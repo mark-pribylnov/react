@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { renderWithUser } from '../../test-utils';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import { SearchPanel } from './SearchPanel';
 
 const defaultProps = {
@@ -13,7 +14,11 @@ const defaultProps = {
 
 describe('SearchPanel', () => {
   it('renders search input, search button, refresh button, and test error button', () => {
-    render(<SearchPanel {...defaultProps} />);
+    render(
+      <TestIntlProvider>
+        <SearchPanel {...defaultProps} />
+      </TestIntlProvider>
+    );
 
     expect(
       screen.getByRole('textbox', { name: /search terms/i })
