@@ -16,6 +16,10 @@ function createPokemonDetail(name: string) {
   return {
     name,
     stats: [{ base_stat: 100, stat: { name: 'hp' } }],
+    sprites: {
+      front_default:
+        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151.png',
+    },
   };
 }
 
@@ -80,6 +84,10 @@ describe('ItemDetailsPanel (RTK Query)', () => {
       expect(
         await screen.findByRole('heading', { name: 'mew', level: 3 })
       ).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: /image of mew/i })).toHaveAttribute(
+        'src',
+        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151.png'
+      );
     });
   });
 

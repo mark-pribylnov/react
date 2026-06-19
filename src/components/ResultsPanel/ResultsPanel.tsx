@@ -7,6 +7,7 @@ import type { PageDirection } from '../../types/otherTypes';
 import { getPokemonItemKey } from '../../lib/pokemonItemKey';
 import { useLocalizedErrorMessage } from '../../hooks/useLocalizedErrorMessage';
 import { toggleSelectedItem, useAppDispatch, useAppSelector } from '../../store';
+import PokemonImage from '../PokemonImage/PokemonImage';
 
 export type ResultsPanelProps = {
   currentPage: number;
@@ -150,7 +151,20 @@ export default function ResultsPanel({
                       onClick={(event) => event.stopPropagation()}
                     />
                   </td>
-                  <td>{`${itemIndex}) ${result.name}`}</td>
+                  <td>
+                    <div className="results-table__name-cell">
+                      {result.imageUrl ? (
+                        <PokemonImage
+                          src={result.imageUrl}
+                          alt={t('imageAlt', { name: result.name })}
+                          width={32}
+                          height={32}
+                          className="results-table__pokemon-image"
+                        />
+                      ) : null}
+                      <span>{`${itemIndex}) ${result.name}`}</span>
+                    </div>
+                  </td>
                   <td>
                     <ul>
                       {result.stats.map((stat) => (

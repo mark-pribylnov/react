@@ -35,6 +35,18 @@
   text-align: center;
 }
 
+.item-details-panel__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.item-details-panel__image {
+  width: 160px;
+  height: auto;
+  margin-bottom: 8px;
+}
+
 .item-details-panel__name {
   margin: 0 0 8px;
   text-transform: capitalize;

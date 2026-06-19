@@ -7,6 +7,7 @@ import { useLocalizedErrorMessage } from '../../hooks/useLocalizedErrorMessage';
 import { readDetailsIndexFromSearchParams } from '../../lib/searchParams';
 import { useGetPokemonByNameQuery } from '../../store';
 import type { HomeOutletContext } from '../../types/homeOutletContext';
+import PokemonImage from '../PokemonImage/PokemonImage';
 import './ItemDetailsPanel.scss';
 
 type PokemonDetailsBodyProps = {
@@ -52,6 +53,15 @@ function PokemonDetailsBody({ pokemonName }: PokemonDetailsBodyProps) {
 
   return (
     <article className="item-details-panel__content">
+      {pokemon.imageUrl ? (
+        <PokemonImage
+          src={pokemon.imageUrl}
+          alt={t('imageAlt', { name: pokemon.name })}
+          width={160}
+          height={160}
+          className="item-details-panel__image"
+        />
+      ) : null}
       <h3 className="item-details-panel__name">{pokemon.name}</h3>
       <ul className="item-details-panel__stats">
         {pokemon.stats.map((stat) => (

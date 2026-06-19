@@ -32,6 +32,7 @@
     "pokemonStats": "Pokemon Stats",
     "loading": "Loading results...",
     "empty": "Nothing to show yet",
+    "imageAlt": "Image of {name}",
     "selectItem": "Select {name}"
   },
   "pageSwitcher": {
@@ -43,6 +44,7 @@
     "title": "Details",
     "close": "Close",
     "loading": "Loading details...",
+    "imageAlt": "Image of {name}",
     "itemUnavailable": "This item is not available in the current results.",
     "loadFailed": "Could not load details for this item."
   },

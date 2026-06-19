@@ -354,7 +354,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /^download$/i }));
 
     expect(downloadSelectedItemsCsv).toHaveBeenCalledWith([
-      { pokemon: { name: 'mew', stats: ['hp - 100'] }, listIndex: 1 },
+      { pokemon: { name: 'mew', stats: ['hp - 100'], imageUrl: null }, listIndex: 1 },
     ]);
   });
 

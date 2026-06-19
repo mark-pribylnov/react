@@ -6,6 +6,14 @@ export type PokemonStat = {
 export type PokemonResponse = {
   name: string;
   stats: PokemonStat[];
+  sprites?: {
+    front_default?: string | null;
+    other?: {
+      'official-artwork'?: {
+        front_default?: string | null;
+      };
+    };
+  };
 };
 
 export type PokemonListItem = {
@@ -19,4 +27,5 @@ export type PokemonListResponse = {
 export type PokemonResult = {
   name: string;
   stats: string[];
+  imageUrl?: string | null;
 };
