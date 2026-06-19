@@ -1,5 +1,6 @@
 import { Provider } from 'react-redux';
 import AppRouter from '../AppRouter';
+import AppLayout from '../layouts/AppLayout';
 import { ThemeProvider } from '../context/ThemeProvider';
 import { setupStore } from '../store/store';
 import { navigationMock } from './navigationMock';
@@ -11,7 +12,9 @@ export function renderTestApp(initialEntries: string[] = ['/']) {
   return renderWithUser(
     <Provider store={setupStore()}>
       <ThemeProvider>
-        <AppRouter />
+        <AppLayout>
+          <AppRouter />
+        </AppLayout>
       </ThemeProvider>
     </Provider>
   );
