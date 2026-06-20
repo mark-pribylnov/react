@@ -7,7 +7,8 @@ import {
   type ChangeEvent,
   type SubmitEvent,
 } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter } from './i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { AppErrorBoundary } from './components/AppErrorBoundary/AppErrorBoundary';
 import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
 import MasterDetailLayout from './components/MasterDetailLayout/MasterDetailLayout';

@@ -5,18 +5,6 @@ import { afterEach, vi } from 'vitest';
 import { navigationMock } from './test-utils/navigationMock';
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: (url: string) => {
-      navigationMock.push(url);
-    },
-    replace: vi.fn(),
-  }),
-  usePathname: () =>
-    useSyncExternalStore(
-      navigationMock.subscribe,
-      () => navigationMock.pathname,
-      () => navigationMock.pathname
-    ),
   useSearchParams: () =>
     useSyncExternalStore(
       navigationMock.subscribe,
@@ -25,8 +13,8 @@ vi.mock('next/navigation', () => ({
     ),
 }));
 
-vi.mock('next/link', () => ({
-  default: ({
+vi.mock('./i18n/navigation', () => ({
+  Link: ({
     href,
     children,
     onClick,
@@ -49,6 +37,20 @@ vi.mock('next/link', () => ({
       {children}
     </a>
   ),
+  useRouter: () => ({
+    push: (url: string) => {
+      navigationMock.push(url);
+    },
+    replace: vi.fn(),
+  }),
+  usePathname: () =>
+    useSyncExternalStore(
+      navigationMock.subscribe,
+      () => navigationMock.pathname,
+      () => navigationMock.pathname
+    ),
+  redirect: vi.fn(),
+  getPathname: ({ href }: { href: string }) => href,
 }));
 
 vi.mock('next/image', () => ({
