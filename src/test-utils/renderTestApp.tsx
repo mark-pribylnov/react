@@ -1,10 +1,10 @@
 import { Provider } from 'react-redux';
-import AppRouter from '../AppRouter';
 import AppLayout from '../layouts/AppLayout';
 import { ThemeProvider } from '../context/ThemeProvider';
 import { setupStore } from '../store/store';
 import { navigationMock } from './navigationMock';
 import { renderWithUser } from './renderWithUser';
+import { TestAppContent } from './TestAppContent';
 
 export function renderTestApp(initialEntries: string[] = ['/']) {
   navigationMock.setInitialEntry(initialEntries[0] ?? '/');
@@ -13,7 +13,7 @@ export function renderTestApp(initialEntries: string[] = ['/']) {
     <Provider store={setupStore()}>
       <ThemeProvider>
         <AppLayout>
-          <AppRouter />
+          <TestAppContent />
         </AppLayout>
       </ThemeProvider>
     </Provider>

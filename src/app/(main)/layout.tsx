@@ -1,6 +1,6 @@
 import AppLayout from '../../layouts/AppLayout';
 
-export default function SlugLayout({
+export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
