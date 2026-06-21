@@ -77,10 +77,22 @@ vi.mock('./lib/delay', () => ({
   delay: vi.fn(() => Promise.resolve()),
 }));
 
-const downloadSelectedItemsCsv = vi.hoisted(() => vi.fn());
+const triggerCsvDownload = vi.hoisted(() => vi.fn());
 
-vi.mock('./lib/downloadSelectedItemsCsv', () => ({
-  downloadSelectedItemsCsv,
+vi.mock('./lib/triggerCsvDownload', () => ({
+  triggerCsvDownload,
+}));
+
+vi.mock('./actions/downloadSelectedItemsCsvAction', () => ({
+  downloadSelectedItemsCsvAction: vi.fn(async (_prevState, formData: FormData) => {
+    const items = JSON.parse(formData.get('items') as string);
+
+    return {
+      csv: 'name,description,details url,stats',
+      fileName: `${items.length}_items.csv`,
+      error: null,
+    };
+  }),
 }));
 
 function resetFetchFixtures() {
@@ -353,9 +365,10 @@ describe('App', () => {
     await user.click(screen.getByRole('checkbox', { name: /select mew/i }));
     await user.click(screen.getByRole('button', { name: /^download$/i }));
 
-    expect(downloadSelectedItemsCsv).toHaveBeenCalledWith([
-      { pokemon: { name: 'mew', stats: ['hp - 100'], imageUrl: null }, listIndex: 1 },
-    ]);
+    expect(triggerCsvDownload).toHaveBeenCalledWith(
+      'name,description,details url,stats',
+      '1_items.csv'
+    );
   });
 
   it('keeps checkbox selections when switching result pages', async () => {
