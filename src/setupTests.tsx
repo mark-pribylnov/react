@@ -42,6 +42,7 @@ vi.mock('./i18n/navigation', () => ({
       navigationMock.push(url);
     },
     replace: vi.fn(),
+    refresh: vi.fn(),
   }),
   usePathname: () =>
     useSyncExternalStore(
