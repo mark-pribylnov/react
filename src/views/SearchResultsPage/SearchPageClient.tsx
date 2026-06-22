@@ -1,28 +1,31 @@
 'use client';
 
 import {
-  useCallback,
+  useActionState,
   useEffect,
   type ChangeEvent,
-  type SubmitEvent,
 } from 'react';
 import { useRouter } from '../../i18n/navigation';
 import { useSearchParams } from 'next/navigation';
+import {
+  searchPokemonAction,
+  type SearchActionState,
+} from '../../actions/searchPokemonAction';
 import { SearchPanel } from '../../components/SearchPanel/SearchPanel';
 import { useSearchTermStorage } from '../../hooks/useSearchTermStorage';
-import {
-  buildListSearchParams,
-  readSearchFromSearchParams,
-} from '../../lib/searchParams';
+import { readSearchFromSearchParams } from '../../lib/searchParams';
 import {
   invalidateAllPokemonCache,
-  normalizeSearchQuery,
   setLastExecutedSearch,
   setSearchQuery,
   setShouldSimulateCrash,
   useAppDispatch,
   useAppSelector,
 } from '../../store';
+
+const initialSearchState: SearchActionState = {
+  error: null,
+};
 
 type SearchPageClientProps = {
   initialSearchTerm: string;
@@ -37,6 +40,10 @@ export function SearchPageClient({ initialSearchTerm }: SearchPageClientProps) {
   const searchParams = useSearchParams();
   const urlSearchTerm = readSearchFromSearchParams(
     searchParams ?? new URLSearchParams()
+  );
+  const [searchState, searchAction, isSearchPending] = useActionState(
+    searchPokemonAction,
+    initialSearchState
   );
 
   useEffect(() => {
@@ -59,40 +66,33 @@ export function SearchPageClient({ initialSearchTerm }: SearchPageClientProps) {
     router.refresh();
   };
 
-  const onSubmit = useCallback(
-    (event: SubmitEvent<HTMLFormElement>): void => {
-      event.preventDefault();
-      const term = searchQuery.trim();
-      if (term === lastExecutedSearch) {
-        if (term !== searchQuery) {
-          dispatch(normalizeSearchQuery());
-        }
-        return;
-      }
-
-      persistSearchTerm(term);
-      dispatch(setLastExecutedSearch(term));
-      const search = buildListSearchParams({
-        page: 1,
-        detailsIndex: null,
-        search: term,
-      });
-      router.push(`/${search}`);
-    },
-    [dispatch, lastExecutedSearch, persistSearchTerm, router, searchQuery]
-  );
+  const handleBeforeSubmit = (): void => {
+    const term = searchQuery.trim();
+    persistSearchTerm(term);
+    dispatch(setLastExecutedSearch(term));
+  };
 
   if (shouldSimulateCrash) {
     throw new Error('Test error button triggered application crash.');
   }
 
   return (
-    <SearchPanel
-      searchQuery={searchQuery}
-      onQueryChange={onQueryChange}
-      onSubmit={onSubmit}
-      onRefresh={handleRefresh}
-      onSimulateError={simulateAppError}
-    />
+    <>
+      {searchState.error ? (
+        <p className="search-section__error" role="alert">
+          {searchState.error}
+        </p>
+      ) : null}
+      <SearchPanel
+        searchQuery={searchQuery}
+        currentSearch={lastExecutedSearch ?? ''}
+        onQueryChange={onQueryChange}
+        formAction={searchAction}
+        onBeforeSubmit={handleBeforeSubmit}
+        isSearchPending={isSearchPending}
+        onRefresh={handleRefresh}
+        onSimulateError={simulateAppError}
+      />
+    </>
   );
 }

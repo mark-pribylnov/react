@@ -50,7 +50,7 @@
   },
   "flyout": {
     "ariaLabel": "Выбранные элементы",
-    "countOne": "Выбран {count} элемент",
+    "countOne": "Выбрано элементов: {count}",
     "countMany": "Выбрано элементов: {count}",
     "unselectAll": "Снять выбор",
     "download": "Скачать"

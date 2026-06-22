@@ -6,8 +6,9 @@ import { SearchPanel } from './SearchPanel';
 
 const defaultProps = {
   searchQuery: '',
+  currentSearch: '',
   onQueryChange: vi.fn(),
-  onSubmit: vi.fn(),
+  formAction: vi.fn(),
   onRefresh: vi.fn(),
   onSimulateError: vi.fn(),
 };
@@ -45,21 +46,19 @@ describe('SearchPanel', () => {
     expect(onQueryChange).toHaveBeenCalled();
   });
 
-  it('invokes onSubmit when the form is submitted', async () => {
-    const onSubmit = vi.fn((event) => {
-      event.preventDefault();
-    });
+  it('submits the search form through the provided action', async () => {
+    const formAction = vi.fn();
 
     const { user } = renderWithUser(
       <SearchPanel
         {...defaultProps}
         searchQuery="mew"
-        onSubmit={onSubmit}
+        formAction={formAction}
       />
     );
 
     await user.click(screen.getByRole('button', { name: /^search$/i }));
-    expect(onSubmit).toHaveBeenCalledTimes(1);
+    expect(formAction).toHaveBeenCalled();
   });
 
   it('invokes onRefresh when the refresh button is clicked', async () => {

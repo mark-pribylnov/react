@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { getLocale, getMessages, getTranslations } from 'next-intl/server';
+import { getLocale, getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import '../index.css';
 import { defaultLocale, isAppLocale } from '../i18n/config';
 import { AppProviders } from './AppProviders';
 
 export async function generateMetadata(): Promise<Metadata> {
+  setRequestLocale(defaultLocale);
   const t = await getTranslations('metadata');
 
   return {
@@ -20,6 +21,7 @@ export default async function RootLayout({
 }) {
   const localeValue = await getLocale();
   const locale = isAppLocale(localeValue) ? localeValue : defaultLocale;
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (

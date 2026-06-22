@@ -1,10 +1,11 @@
 'use client';
 
-import type { ChangeEvent, MouseEvent } from 'react';
-import { useRouter } from '../../i18n/navigation';
+import type { ChangeEvent, MouseEvent, TransitionStartFunction } from 'react';
+import { useTransition } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { selectPokemonDetailsAction } from '../../actions/selectPokemonDetailsAction';
 import {
-  buildListSearchParams,
   readPageFromSearchParams,
   readSearchFromSearchParams,
 } from '../../lib/searchParams';
@@ -17,20 +18,17 @@ type ResultsPanelRowClientProps = {
   result: PokemonResult;
   itemIndex: number;
   selectedDetailsIndex: number | null;
-  imageAltLabel: string;
-  selectItemLabel: string;
 };
 
 export function ResultsPanelRowClient({
   result,
   itemIndex,
   selectedDetailsIndex,
-  imageAltLabel,
-  selectItemLabel,
 }: ResultsPanelRowClientProps) {
+  const t = useTranslations('resultsPanel');
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [isSelecting, startTransition] = useTransition();
   const selectedItems = useAppSelector((state) => state.selectedItems.items);
   const itemKey = getPokemonItemKey(result);
   const isChecked = selectedItems.some(
@@ -40,19 +38,28 @@ export function ResultsPanelRowClient({
   const rowClassName = [
     isChecked ? 'results-row-checked' : '',
     isDetailsOpen ? 'results-row-details-open' : '',
+    isSelecting ? 'results-row-selecting' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
+  const submitDetailsSelection = (
+    startTransitionFn: TransitionStartFunction
+  ): void => {
+    const params = searchParams ?? new URLSearchParams();
+    const formData = new FormData();
+    formData.set('detailsIndex', String(itemIndex));
+    formData.set('page', String(readPageFromSearchParams(params)));
+    formData.set('search', readSearchFromSearchParams(params));
+
+    startTransitionFn(() => {
+      void selectPokemonDetailsAction(formData);
+    });
+  };
+
   const handleRowClick = (event: MouseEvent<HTMLTableRowElement>): void => {
     event.stopPropagation();
-    const params = searchParams ?? new URLSearchParams();
-    const search = buildListSearchParams({
-      page: readPageFromSearchParams(params),
-      detailsIndex: itemIndex,
-      search: readSearchFromSearchParams(params),
-    });
-    router.push(`/details${search}`);
+    submitDetailsSelection(startTransition);
   };
 
   const handleCheckboxChange = (event: ChangeEvent<HTMLInputElement>): void => {
@@ -69,7 +76,7 @@ export function ResultsPanelRowClient({
         <input
           type="checkbox"
           checked={isChecked}
-          aria-label={selectItemLabel}
+          aria-label={t('selectItem', { name: result.name })}
           onChange={handleCheckboxChange}
           onClick={(event) => event.stopPropagation()}
         />
@@ -79,7 +86,7 @@ export function ResultsPanelRowClient({
           {result.imageUrl ? (
             <PokemonImage
               src={result.imageUrl}
-              alt={imageAltLabel}
+              alt={t('imageAlt', { name: result.name })}
               width={32}
               height={32}
               className="results-table__pokemon-image"

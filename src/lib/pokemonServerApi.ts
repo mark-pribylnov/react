@@ -79,6 +79,37 @@ export type PokemonListFetchResult = {
   errorMessage: string;
 };
 
+export type PokemonDetailFetchResult = {
+  pokemon: PokemonResult | null;
+  errorMessage: string;
+};
+
+export async function fetchPokemonDetailByName(
+  name: string
+): Promise<PokemonDetailFetchResult> {
+  try {
+    const pokemon = await fetchPokemonByName(name);
+
+    if (!pokemon) {
+      return {
+        pokemon: null,
+        errorMessage: 'Could not load details for this item.',
+      };
+    }
+
+    return { pokemon, errorMessage: '' };
+  } catch (error) {
+    if (error instanceof HttpError) {
+      return { pokemon: null, errorMessage: error.message };
+    }
+
+    return {
+      pokemon: null,
+      errorMessage: 'Could not load details for this item.',
+    };
+  }
+}
+
 export async function fetchPokemonListForPage(
   searchTerm: string
 ): Promise<PokemonListFetchResult> {

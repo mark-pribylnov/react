@@ -1,14 +1,15 @@
 'use client';
 
 import {
+  useActionState,
   useCallback,
   useEffect,
   useMemo,
   type ChangeEvent,
-  type SubmitEvent,
 } from 'react';
 import { usePathname, useRouter } from '../../i18n/navigation';
 import { useSearchParams } from 'next/navigation';
+import type { SearchActionState } from '../../actions/searchPokemonAction';
 import { AppErrorBoundary } from '../../components/AppErrorBoundary/AppErrorBoundary';
 import ItemDetailsPanel from '../../components/ItemDetailsPanel/ItemDetailsPanel';
 import MasterDetailLayout from '../../components/MasterDetailLayout/MasterDetailLayout';
@@ -140,24 +141,42 @@ function SearchPageInteractiveContent() {
     invalidateAllPokemonCache(dispatch);
   };
 
-  const onSubmit = (event: SubmitEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    const term = searchQuery.trim();
-    if (term === lastExecutedSearch) {
-      if (term !== searchQuery) {
-        dispatch(normalizeSearchQuery());
-      }
-      return;
-    }
+  const interactiveSearchAction = useCallback(
+    async (
+      _prevState: SearchActionState,
+      formData: FormData
+    ): Promise<SearchActionState> => {
+      const term = String(formData.get('searchQuery') ?? '').trim();
+      const currentSearch = String(formData.get('currentSearch') ?? '').trim();
 
-    persistSearchTerm(term);
-    navigateWithListParams({
-      page: 1,
-      detailsIndex: null,
-      openDetails: false,
-      search: term,
-    });
-    dispatch(setLastExecutedSearch(term));
+      if (term === currentSearch) {
+        if (term !== searchQuery.trim()) {
+          dispatch(normalizeSearchQuery());
+        }
+        return { error: null };
+      }
+
+      persistSearchTerm(term);
+      dispatch(setLastExecutedSearch(term));
+      navigateWithListParams({
+        page: 1,
+        detailsIndex: null,
+        openDetails: false,
+        search: term,
+      });
+
+      return { error: null };
+    },
+    [dispatch, navigateWithListParams, persistSearchTerm, searchQuery]
+  );
+
+  const [, searchAction] = useActionState(interactiveSearchAction, {
+    error: null,
+  });
+
+  const handleBeforeSubmit = (): void => {
+    persistSearchTerm(searchQuery.trim());
+    dispatch(setLastExecutedSearch(searchQuery.trim()));
   };
 
   const handleListPanelClick = (): void => {
@@ -174,8 +193,10 @@ function SearchPageInteractiveContent() {
     <>
       <SearchPanel
         searchQuery={searchQuery}
+        currentSearch={lastExecutedSearch ?? ''}
         onQueryChange={onQueryChange}
-        onSubmit={onSubmit}
+        formAction={searchAction}
+        onBeforeSubmit={handleBeforeSubmit}
         onRefresh={handleRefresh}
         onSimulateError={simulateAppError}
       />

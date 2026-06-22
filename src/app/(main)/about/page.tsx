@@ -1,9 +1,11 @@
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { AboutPageContent } from '../../../views/AboutPage/AboutPageContent';
+import { defaultLocale } from '../../../i18n/config';
 
 export const dynamic = 'force-static';
 
 export default async function AboutPage() {
+  setRequestLocale(defaultLocale);
   const t = await getTranslations('aboutPage');
 
   return (

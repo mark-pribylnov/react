@@ -12,9 +12,8 @@ describe('NotFoundPage', () => {
     );
 
     expect(screen.getByText(/page not found/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /back to main app/i })).toHaveAttribute(
-      'href',
-      '/'
-    );
+    expect(
+      screen.getByRole('link', { name: /back to main app/i })
+    ).toHaveAttribute('href', '/');
   });
 });
