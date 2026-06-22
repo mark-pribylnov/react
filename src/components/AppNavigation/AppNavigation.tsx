@@ -1,21 +1,27 @@
-import { NavLink } from 'react-router';
+'use client';
+
+import { Link, usePathname } from '../../i18n/navigation';
+import { useTranslations } from 'next-intl';
 import './AppNavigation.scss';
 
-function getNavLinkClassName({ isActive }: { isActive: boolean }): string {
+function getNavLinkClassName(isActive: boolean): string {
   return isActive
     ? 'app-navigation__link app-navigation__link--active'
     : 'app-navigation__link';
 }
 
 export default function AppNavigation() {
+  const pathname = usePathname();
+  const t = useTranslations('nav');
+
   return (
-    <nav className="app-navigation" aria-label="Main navigation">
-      <NavLink to="/" end className={getNavLinkClassName}>
-        Search
-      </NavLink>
-      <NavLink to="/about" className={getNavLinkClassName}>
-        About
-      </NavLink>
+    <nav className="app-navigation" aria-label={t('ariaLabel')}>
+      <Link href="/" className={getNavLinkClassName(pathname === '/')}>
+        {t('search')}
+      </Link>
+      <Link href="/about" className={getNavLinkClassName(pathname === '/about')}>
+        {t('about')}
+      </Link>
     </nav>
   );
 }

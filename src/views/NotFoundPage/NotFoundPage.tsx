@@ -1,0 +1,20 @@
+'use client';
+
+import { Link } from '../../i18n/navigation';
+import { useTranslations } from 'next-intl';
+import './NotFoundPage.scss';
+
+export default function NotFoundPage() {
+  const t = useTranslations('notFoundPage');
+
+  return (
+    <section className="not-found-page">
+      <h1 className="not-found-page__code">404</h1>
+      <h2 className="not-found-page__title">{t('title')}</h2>
+      <p className="not-found-page__message">{t('message')}</p>
+      <Link href="/" className="not-found-page__link">
+        {t('backHome')}
+      </Link>
+    </section>
+  );
+}

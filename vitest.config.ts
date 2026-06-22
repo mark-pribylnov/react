@@ -7,7 +7,8 @@ export default mergeConfig(
     test: {
       globals: false,
       environment: 'jsdom',
-      setupFiles: ['./src/setupTests.ts'],
+      setupFiles: ['./src/setupTests.tsx'],
+      exclude: ['**/node_modules/**', '**/.next/**'],
       fileParallelism: false,
       maxConcurrency: 1,
       css: true,

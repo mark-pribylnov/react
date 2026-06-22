@@ -1,10 +1,13 @@
 import type { PokemonResult } from '../../types/pokemon';
 import PageSwitcher from '../PageSwitcher/PageSwitcher';
 import type { ChangeEvent, Dispatch, MouseEvent, SetStateAction } from 'react';
+import { useTranslations } from 'next-intl';
 import './ResultsPanel.scss';
 import type { PageDirection } from '../../types/otherTypes';
 import { getPokemonItemKey } from '../../lib/pokemonItemKey';
+import { useLocalizedErrorMessage } from '../../hooks/useLocalizedErrorMessage';
 import { toggleSelectedItem, useAppDispatch, useAppSelector } from '../../store';
+import PokemonImage from '../PokemonImage/PokemonImage';
 
 export type ResultsPanelProps = {
   currentPage: number;
@@ -28,6 +31,8 @@ export default function ResultsPanel({
   selectedDetailsIndex = null,
   onSelectItem,
 }: ResultsPanelProps) {
+  const t = useTranslations('resultsPanel');
+  const localizedErrorMessage = useLocalizedErrorMessage(errorMessage);
   const dispatch = useAppDispatch();
   const selectedItems = useAppSelector((state) => state.selectedItems.items);
   const selectedKeys = new Set(
@@ -76,7 +81,7 @@ export default function ResultsPanel({
   return (
     <section className="results-section">
       <header className="section-header">
-        <h2>Result area:</h2>
+        <h2>{t('heading')}</h2>
         {showPagination ? (
           <PageSwitcher
             currentPage={currentPage}
@@ -90,10 +95,10 @@ export default function ResultsPanel({
         <thead>
           <tr>
             <th scope="col" className="results-table__select-col">
-              Select
+              {t('select')}
             </th>
-            <th scope="col">Pokemon Name</th>
-            <th scope="col">Pokemon Stats</th>
+            <th scope="col">{t('pokemonName')}</th>
+            <th scope="col">{t('pokemonStats')}</th>
           </tr>
         </thead>
         <tbody>
@@ -102,19 +107,19 @@ export default function ResultsPanel({
               <td colSpan={columnCount}>
                 <div className="loading-indicator" role="status">
                   <span className="loading-spinner" />
-                  Loading results...
+                  {t('loading')}
                 </div>
               </td>
             </tr>
-          ) : errorMessage ? (
+          ) : localizedErrorMessage ? (
             <tr className="results-row-error">
               <td colSpan={columnCount} role="alert">
-                {errorMessage}
+                {localizedErrorMessage}
               </td>
             </tr>
           ) : results.length === 0 ? (
             <tr>
-              <td colSpan={columnCount}>Nothing to show yet</td>
+              <td colSpan={columnCount}>{t('empty')}</td>
             </tr>
           ) : (
             showedResults.map((result) => {
@@ -139,14 +144,27 @@ export default function ResultsPanel({
                     <input
                       type="checkbox"
                       checked={isChecked}
-                      aria-label={`Select ${result.name}`}
+                      aria-label={t('selectItem', { name: result.name })}
                       onChange={(event) =>
                         handleCheckboxChange(event, result, itemIndex)
                       }
                       onClick={(event) => event.stopPropagation()}
                     />
                   </td>
-                  <td>{`${itemIndex}) ${result.name}`}</td>
+                  <td>
+                    <div className="results-table__name-cell">
+                      {result.imageUrl ? (
+                        <PokemonImage
+                          src={result.imageUrl}
+                          alt={t('imageAlt', { name: result.name })}
+                          width={32}
+                          height={32}
+                          className="results-table__pokemon-image"
+                        />
+                      ) : null}
+                      <span>{`${itemIndex}) ${result.name}`}</span>
+                    </div>
+                  </td>
                   <td>
                     <ul>
                       {result.stats.map((stat) => (

@@ -1,13 +1,13 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { MemoryRouter, Outlet, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createMockFetchResponse,
   getFetchRequestUrl,
 } from '../../test-utils/createMockFetchResponse';
+import { navigationMock } from '../../test-utils/navigationMock';
+import { TestIntlProvider } from '../../test-utils/TestIntlProvider';
 import { setupStore } from '../../store/store';
-import type { HomeOutletContext } from '../../types/homeOutletContext';
 import ItemDetailsPanel from './ItemDetailsPanel';
 
 const mockFetch = vi.fn();
@@ -16,6 +16,10 @@ function createPokemonDetail(name: string) {
   return {
     name,
     stats: [{ base_stat: 100, stat: { name: 'hp' } }],
+    sprites: {
+      front_default:
+        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151.png',
+    },
   };
 }
 
@@ -38,24 +42,20 @@ function installFetchMock() {
 
 function renderItemDetails(store = setupStore()) {
   const closeDetails = vi.fn();
-  const outletContext: HomeOutletContext = {
-    results: [{ name: 'mew', stats: ['hp - 100'] }],
-    closeDetails,
-  };
+  navigationMock.setInitialEntry('/?details=1');
 
   return {
     store,
     closeDetails,
     ...render(
-      <Provider store={store}>
-        <MemoryRouter initialEntries={['/details?details=1']}>
-          <Routes>
-            <Route element={<Outlet context={outletContext} />}>
-              <Route path="/details" element={<ItemDetailsPanel />} />
-            </Route>
-          </Routes>
-        </MemoryRouter>
-      </Provider>
+      <TestIntlProvider>
+        <Provider store={store}>
+          <ItemDetailsPanel
+            results={[{ name: 'mew', stats: ['hp - 100'] }]}
+            closeDetails={closeDetails}
+          />
+        </Provider>
+      </TestIntlProvider>
     ),
   };
 }
@@ -84,6 +84,10 @@ describe('ItemDetailsPanel (RTK Query)', () => {
       expect(
         await screen.findByRole('heading', { name: 'mew', level: 3 })
       ).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: /image of mew/i })).toHaveAttribute(
+        'src',
+        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/151.png'
+      );
     });
   });
 
@@ -116,21 +120,17 @@ describe('ItemDetailsPanel (RTK Query)', () => {
       mockFetch.mockClear();
       cleanup();
 
-      const outletContext: HomeOutletContext = {
-        results: [{ name: 'mew', stats: ['hp - 100'] }],
-        closeDetails: vi.fn(),
-      };
+      navigationMock.setInitialEntry('/?details=1');
 
       render(
-        <Provider store={store}>
-          <MemoryRouter initialEntries={['/details?details=1']}>
-            <Routes>
-              <Route element={<Outlet context={outletContext} />}>
-                <Route path="/details" element={<ItemDetailsPanel />} />
-              </Route>
-            </Routes>
-          </MemoryRouter>
-        </Provider>
+        <TestIntlProvider>
+          <Provider store={store}>
+            <ItemDetailsPanel
+              results={[{ name: 'mew', stats: ['hp - 100'] }]}
+              closeDetails={vi.fn()}
+            />
+          </Provider>
+        </TestIntlProvider>
       );
 
       expect(

@@ -1,7 +1,7 @@
 const DEFAULT_CACHE_TTL_SECONDS = 60;
 
 export function getCacheTtlSeconds(): number {
-  const raw = import.meta.env.VITE_CACHE_TTL_SECONDS;
+  const raw = process.env.NEXT_PUBLIC_CACHE_TTL_SECONDS;
   if (raw === undefined || raw === '') {
     return DEFAULT_CACHE_TTL_SECONDS;
   }
@@ -13,7 +13,7 @@ export function getCacheTtlSeconds(): number {
 }
 
 export function getPokeApiBaseUrl(): string {
-  const baseUrl = import.meta.env.VITE_POKEAPI_BASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_POKEAPI_BASE_URL;
   return baseUrl && baseUrl.length > 0
     ? baseUrl
     : 'https://pokeapi.co/api/v2';

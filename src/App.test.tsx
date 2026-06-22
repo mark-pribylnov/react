@@ -1,14 +1,11 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { Provider } from 'react-redux';
-import { MemoryRouter, Route, Routes } from 'react-router';
-import ItemDetailsPanel from './components/ItemDetailsPanel/ItemDetailsPanel';
+import { screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ThemeProvider } from './context/ThemeProvider.tsx';
-import AboutPage from './pages/AboutPage/AboutPage';
-import AppLayout from './layouts/AppLayout';
-import { setupStore } from './store/store';
-import { createMockFetchResponse, getFetchRequestUrl } from './test-utils/createMockFetchResponse';
+import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
+import {
+  createMockFetchResponse,
+  getFetchRequestUrl,
+} from './test-utils/createMockFetchResponse';
+import { renderTestApp } from './test-utils/renderTestApp';
 
 type TestListItem = { name: string; stats?: string[] };
 
@@ -80,16 +77,23 @@ vi.mock('./lib/delay', () => ({
   delay: vi.fn(() => Promise.resolve()),
 }));
 
-const downloadSelectedItemsCsv = vi.hoisted(() => vi.fn());
+const triggerCsvDownload = vi.hoisted(() => vi.fn());
 
-vi.mock('./lib/downloadSelectedItemsCsv', () => ({
-  downloadSelectedItemsCsv,
+vi.mock('./lib/triggerCsvDownload', () => ({
+  triggerCsvDownload,
 }));
 
-import App from './App';
-import { getLastSearch, saveSearchTerm } from './storage/searchTermStorage';
+vi.mock('./actions/downloadSelectedItemsCsvAction', () => ({
+  downloadSelectedItemsCsvAction: vi.fn(async (_prevState, formData: FormData) => {
+    const items = JSON.parse(formData.get('items') as string);
 
-const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
+    return {
+      csv: 'name,description,details url,stats',
+      fileName: `${items.length}_items.csv`,
+      error: null,
+    };
+  }),
+}));
 
 function resetFetchFixtures() {
   testListItems.length = 0;
@@ -107,30 +111,10 @@ function countFetchCalls(matcher: (url: string) => boolean): number {
 }
 
 function renderApp(initialEntries: string[] = ['/']) {
-  const store = setupStore();
-  const user = userEvent.setup();
-
-  return {
-    user,
-    store,
-    ...render(
-      <Provider store={store}>
-        <ThemeProvider>
-          <MemoryRouter initialEntries={initialEntries}>
-            <Routes>
-              <Route element={<AppLayout />}>
-                <Route path="/" element={<App />}>
-                  <Route path="details" element={<ItemDetailsPanel />} />
-                </Route>
-                <Route path="/about" element={<AboutPage />} />
-              </Route>
-            </Routes>
-          </MemoryRouter>
-        </ThemeProvider>
-      </Provider>
-    ),
-  };
+  return renderTestApp(initialEntries);
 }
+
+const fixtures = [{ name: 'mew', stats: ['hp - 100'] }];
 
 beforeEach(() => {
   vi.mocked(getLastSearch).mockReturnValue('');
@@ -381,9 +365,10 @@ describe('App', () => {
     await user.click(screen.getByRole('checkbox', { name: /select mew/i }));
     await user.click(screen.getByRole('button', { name: /^download$/i }));
 
-    expect(downloadSelectedItemsCsv).toHaveBeenCalledWith([
-      { pokemon: { name: 'mew', stats: ['hp - 100'] }, listIndex: 1 },
-    ]);
+    expect(triggerCsvDownload).toHaveBeenCalledWith(
+      'name,description,details url,stats',
+      '1_items.csv'
+    );
   });
 
   it('keeps checkbox selections when switching result pages', async () => {

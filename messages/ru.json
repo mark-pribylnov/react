@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "title": "rs-react-app",
+    "description": "Учебный проект RS School React"
+  },
+  "nav": {
+    "ariaLabel": "Основная навигация",
+    "search": "Поиск",
+    "about": "О проекте"
+  },
+  "theme": {
+    "ariaLabel": "Тема приложения",
+    "light": "светлая",
+    "dark": "тёмная"
+  },
+  "language": {
+    "ariaLabel": "Язык приложения",
+    "en": "EN",
+    "ru": "RU"
+  },
+  "searchPanel": {
+    "heading": "Поиск:",
+    "refresh": "Обновить",
+    "testError": "Тест Error Boundary",
+    "searchTerms": "Поисковый запрос",
+    "search": "Искать"
+  },
+  "resultsPanel": {
+    "heading": "Результаты:",
+    "select": "Выбор",
+    "pokemonName": "Имя покемона",
+    "pokemonStats": "Характеристики",
+    "loading": "Загрузка результатов...",
+    "empty": "Пока нечего показывать",
+    "imageAlt": "Изображение {name}",
+    "selectItem": "Выбрать {name}"
+  },
+  "pageSwitcher": {
+    "previous": "← Предыдущая страница",
+    "next": "Следующая страница →"
+  },
+  "detailsPanel": {
+    "ariaLabel": "Детали элемента",
+    "title": "Детали",
+    "close": "Закрыть",
+    "loading": "Загрузка деталей...",
+    "imageAlt": "Изображение {name}",
+    "itemUnavailable": "Этот элемент недоступен в текущих результатах.",
+    "loadFailed": "Не удалось загрузить детали для этого элемента."
+  },
+  "flyout": {
+    "ariaLabel": "Выбранные элементы",
+    "countOne": "Выбрано элементов: {count}",
+    "countMany": "Выбрано элементов: {count}",
+    "unselectAll": "Снять выбор",
+    "download": "Скачать"
+  },
+  "aboutPage": {
+    "heading": "О проекте",
+    "intro": "Это приложение создано для учебного проекта RS School React.",
+    "author": "Автор",
+    "course": "Курс",
+    "courseLink": "Курс RS School React"
+  },
+  "notFoundPage": {
+    "title": "Страница не найдена",
+    "message": "Страница, которую вы ищете, не существует",
+    "backHome": "Вернуться в приложение"
+  },
+  "errorBoundary": {
+    "heading": "Что-то пошло не так",
+    "message": "Произошла непредвиденная ошибка. Попробуйте сбросить приложение и продолжить работу.",
+    "reset": "Сбросить приложение"
+  },
+  "errors": {
+    "noResults": "По этому запросу ничего не найдено.",
+    "serverError": "Ошибка сервера. Попробуйте ещё раз через минуту.",
+    "requestError": "Ошибка запроса. Проверьте поисковый запрос и попробуйте снова.",
+    "loadFailed": "Не удалось загрузить данные. Попробуйте ещё раз.",
+    "networkError": "Ошибка сети. Проверьте подключение и попробуйте снова.",
+    "timeoutError": "Превышено время ожидания. Попробуйте ещё раз."
+  }
+}
